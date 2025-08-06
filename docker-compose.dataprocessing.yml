@@ -1,0 +1,13 @@
+
+services:
+  dataprocessor:
+    build:
+      context: .
+      dockerfile: Dockerfile.data
+    volumes:
+      - ./data:/app/data
+      - ./tiles:/app/tiles
+    environment:
+      - TZ=Europe/Berlin
+    command: sh -c "./download-osm.sh && ./download-radwege-nrw.sh"
+    restart: "no"

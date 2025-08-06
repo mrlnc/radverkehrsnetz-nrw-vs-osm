@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>OSM-Radwege vs. NRW Radverkehrsnetz</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <link href="thirdparty/maplibre-gl.css" rel="stylesheet" />
+  <link href="output.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div class="relative w-screen h-screen">
+  <div id="map" class="hidden" style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; z-index: 1;"></div>
+
+
+    <div id="cookieModal" class="absolute flex inset-0 z-50  items-center justify-center">
+      <!-- Modal Content -->
+      <div class="bg-white rounded shadow-md p-4 w-64 space-y-2">
+        <h2 class="text-xl font-semibold mb-4">Privacy Notice</h2>
+        <p class="text-gray-600 mb-6">
+          Die Karte nutzt Hintergrundkarten von OpenStreetMap (OSM). Die Karten werden direkt von OSM abgerufen, wobei natürlich die IP-Adresse übertragen und ggf. gespeichert wird (siehe <a href="https://osmfoundation.org/wiki/Privacy_Policy"><u>hier</u></a>). Diese Seite selbst verwendet keine Cookies.
+          keine Daten. Die Karte ist ein privates Projekt und wird nicht kommerziell betrieben.
+        </p>
+        <button id="startBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+          Start Application
+        </button>
+      </div>
+    </div>
+
+    <div id="context-menu" class="hidden absolute z-50 bg-white border rounded shadow-md text-sm w-48 p-2">
+      <a id="osmLink" href="#" target="_blank" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
+        Open in OSM
+      </a>
+      <a id="mapillaryLink" href="#" target="_blank" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
+        Open in Mapillary
+      </a>
+    </div>
+
+    <div id="mapMenu" class="hidden absolute top-4 left-4 z-[2] bg-white rounded shadow-md p-4 space-y-2 w-64">
+      <h3 class="text-center">Presets</h3>
+      <div id="presetList">
+      </div>
+
+      <div id="mapKeyContainer" class="space-y-1 p-2 bg-white rounded shadow-md">
+        <h3 class="text-center">Layers</h3>
+        <div id="mapKey"></div>
+      </div>
+    </div>
+
+    <div id="info-container" class="hidden absolute top-4 right-4 space-y-2 z-[999]">
+      <div id="info" class="bg-white rounded shadow-md p-4 w-64 space-y-2">
+        <a class="hover:underline">Info</a>
+        <p id="info-content" class="hidden text-sm text-left">
+          Die Karte vergleicht Radwege in OpenStreetMap (OSM) mit den Daten des Landes (<a
+            href="https://www.radverkehrsnetz.nrw.de">Radverkehrsnetz NRW</a>).<br><br>
+          Ziel ist es, Fehler in OSM zu finden und verbessern zu können.<br><br>
+          Nicht alle Abweichungen stellen Fehler in OSM dar, teilweise ist auch das Radverkehrsnetz NRW nicht
+          aktuell. Die Karte kann also bestenfalls Hinweise liefern.<br><br>
+
+          Zuletzt aktualisiert: 2025-05-12<br><br>
+
+          Die Daten des Radverkehrsnetz NRW werden unter der <a href="https://www.govdata.de/dl-de/zero-2-0">Datenlizenz
+            Deutschland - Zero - Version 2.0</a> veröffentlicht.
+          <a href="https://www.radverkehrsnetz.nrw.de/rvn_link.asp"><u>Mehr Informationen</u></a>.
+        </p>
+      </div>
+    </div>
+
+    <div id="legal-container" class="absolute bottom-4 left-4 space-y-2 z-[999]">
+      <div id="legal" class="bg-white rounded shadow-md p-4 w-64 space-y-2">
+        <a class="hover:underline">Impressum und Datenschutz</a>
+        <p id="legal-content" class="hidden ">
+          <small>Kein Tracking, keine Cookies, keine Werbung. Diese Seite ist ein privates Projekt und wird nicht
+            kommerziell betrieben. Die Hintergrundkarte wird von OSM abgerufen.<br>
+
+            Kontakt:<br>
+            TODO Impressum<br>
+          </small>
+        </p>
+      </div>
+    </div>
+  </div>
+
+
+  </div>
+  <script src="thirdparty/maplibre-gl.js"></script>
+  <script src="main.js"></script>
+
+</body>
+
+</html>

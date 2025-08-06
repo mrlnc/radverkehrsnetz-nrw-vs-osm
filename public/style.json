@@ -1,0 +1,259 @@
+{
+    "version": 8,
+    "sources": {
+        "knotenpunktnetz": {
+            "type": "vector",
+            "url": "http://tileserver.osm.app.internal:8080/data/knotenpunktnetz_nw.json",
+            "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
+        },
+        "knotenpunkte": {
+            "type": "vector",
+            "url": "http://tileserver.osm.app.internal:8080/data/knotenpunkte_nw.json",
+            "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
+        },
+        "radnetz": {
+            "type": "vector",
+            "url": "http://tileserver.osm.app.internal:8080/data/radnetz_nw.json",
+            "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
+        },
+        "radnetz_rcn_osm": {
+            "type": "vector",
+            "url": "http://tileserver.osm.app.internal:8080/data/radnetz_rcn_osm.json",
+            "attribution": "&copy; OpenStreetMap Contributors"
+        },
+        "knotenpunkte_osm": {
+            "type": "vector",
+            "url": "http://tileserver.osm.app.internal:8080/data/knotenpunkte_osm.json",
+            "attribution": "&copy; OpenStreetMap Contributors"
+        },
+        "knotenpunktnetz_osm": {
+            "type": "vector",
+            "url": "http://tileserver.osm.app.internal:8080/data/knotenpunktnetz_osm.json",
+            "attribution": "&copy; OpenStreetMap Contributors"
+        },
+        "osm": {
+            "type": "raster",
+            "tiles": [
+                "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            ],
+            "tileSize": 256,
+            "attribution": "&copy; OpenStreetMap Contributors",
+            "maxzoom": 19
+        }
+    },
+    "layers": [
+        {
+            "id": "osm",
+            "type": "raster",
+            "source": "osm",
+            "paint": {
+                "raster-opacity": 0.45
+            }
+        },
+        {
+            "id": "knotenpunkte_nw",
+            "type": "circle",
+            "source": "knotenpunkte",
+            "source-layer": "knotenpunkte_nw",
+            "layout": {
+                "visibility": "none"
+            },
+            "paint": {
+                "circle-radius": 8,
+                "circle-color": "#B48EAD"
+            }
+        },
+        {
+            "id": "knotenpunkte_osm",
+            "type": "circle",
+            "source": "knotenpunkte_osm",
+            "source-layer": "knotenpunkte_osm",
+            "layout": {
+                "visibility": "none"
+            },
+            "paint": {
+                "circle-radius": 8,
+                "circle-color": "#5E81AC"
+            }
+        },
+        {
+            "id": "knotenpunktnetz_nw",
+            "type": "line",
+            "source": "knotenpunktnetz",
+            "source-layer": "knotenpunktnetz_nw",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round",
+                "visibility": "none"
+            },
+            "paint": {
+                "line-color": "#BF616A",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
+            }
+        },
+        {
+            "id": "radnetz_nw",
+            "type": "line",
+            "source": "radnetz",
+            "source-layer": "radnetz_nw",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round",
+                "visibility": "none"
+            },
+            "paint": {
+                "line-color": "#BF616A",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
+            }
+        },
+        {
+            "id": "radnetz_nw_netztyp_radverkehrsnetz_nrw",
+            "type": "line",
+            "source": "radnetz",
+            "source-layer": "radnetz_nw",
+            "filter": ["==", "netztyp", "Radverkersnetz NRW"],
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round",
+                "visibility": "none"
+            },
+            "paint": {
+                "line-color": "#BF616A",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
+            }
+        },
+        {
+            "id": "radnetz_nw_netztyp_lokal",
+            "type": "line",
+            "source": "radnetz",
+            "source-layer": "radnetz_nw",
+            "filter": ["==", "netztyp", "Lokales Netz"],
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round",
+                "visibility": "none"
+
+            },
+            "paint": {
+                "line-color": "#BF616A",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
+            }
+        },
+        {
+            "id": "radnetz_nw_netztyp_themenroute_auf_radverkehrsnetz_nrw",
+            "type": "line",
+            "source": "radnetz",
+            "source-layer": "radnetz_nw",
+            "filter": ["==", "netztyp", "Themenroute auf Radverkersnetz NRW"],
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round",
+                "visibility": "none"
+            },
+            "paint": {
+                "line-color": "#BF616A",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
+            }
+        },
+        {
+            "id": "radnetz_nw_netztyp_themenroute",
+            "type": "line",
+            "source": "radnetz",
+            "source-layer": "radnetz_nw",
+            "filter": ["==", "netztyp", "Themenroute"],
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round"
+            },
+            "paint": {
+                "line-color": "#BF616A",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
+            }
+        },
+        {
+            "id": "radnetz_rcn_osm",
+            "type": "line",
+            "source": "radnetz_rcn_osm",
+            "source-layer": "radnetz_rcn_osm",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round"
+            },
+            "paint": {
+                "line-color": "#A3BE8C",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
+            }
+        },
+        {
+            "id": "knotenpunktnetz_osm",
+            "type": "line",
+            "source": "knotenpunktnetz_osm",
+            "source-layer": "knotenpunktnetz_osm",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round",
+                "visibility": "none"
+            },
+            "paint": {
+                "line-color": "#5E81AC",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
+            }
+        }
+    ]
+}
