@@ -1,0 +1,18 @@
+services:
+  tileserver:
+    image: maptiler/tileserver-gl
+    volumes:
+      - ./tiles:/tiles
+    command: --config /tiles/tileserver-config.json --public_url http://tileserver.osm.app.internal:8080 --verbose
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./public:/usr/share/nginx/html:ro
+      - ./reverse-proxy.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    depends_on:
+      - tileserver

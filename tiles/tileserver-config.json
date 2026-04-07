@@ -1,0 +1,27 @@
+{
+  "options": {
+    "paths": {
+      "mbtiles": "/tiles"
+    }
+  },
+  "data": {
+    "radnetz_nw": {
+      "mbtiles": "radnetz_nw.mbtiles"
+    },
+    "knotenpunktnetz_nw": {
+      "mbtiles": "knotenpunktnetz_nw.mbtiles"
+    },
+    "knotenpunkte_nw": {
+      "mbtiles": "knotenpunkte_nw.mbtiles"
+    },
+    "knotenpunkte_osm": {
+      "mbtiles": "knotenpunkte_osm.mbtiles"
+    },
+    "knotenpunktnetz_osm": {
+      "mbtiles": "knotenpunktnetz_osm.mbtiles"
+    },
+    "radnetz_rcn_osm": {
+      "mbtiles": "radnetz_rcn_osm.mbtiles"
+    }
+  }
+}

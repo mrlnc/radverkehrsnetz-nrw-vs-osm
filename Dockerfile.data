@@ -1,0 +1,17 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    gdal-bin \
+    osmium-tool \
+    tippecanoe \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY download-osm.sh download-radwege-nrw.sh ./
+RUN chmod +x *.sh
+
+RUN mkdir -p data tiles
+
+CMD ["/bin/bash"]

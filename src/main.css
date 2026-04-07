@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+.drag-over-top {
+    border-top: 2px solid #60a5fa; /* Tailwind blue-400 */
+}
+.drag-over-bottom {
+    border-bottom: 2px solid #60a5fa;
+}

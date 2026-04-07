@@ -1,0 +1,13 @@
+.vscode/
+.venv/
+node_modules/
+public/thirdparty
+
+tippecanoe/
+docker/
+
+data/
+tiles/*.mbtiles
+
+*.mbtiles
+*.geojson

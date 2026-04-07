@@ -1,0 +1,284 @@
+const contextMenu = document.getElementById('context-menu');
+const osmLink = document.getElementById('osmLink');
+const mapillaryLink = document.getElementById('mapillaryLink');
+
+const targetLayers = {
+    knotenpunktnetz_nw: {
+        color: '#BF616A',
+        kind: 'line',
+        label: 'Knotenpunktnetz NRW'
+    },
+    knotenpunkte_nw: {
+        color: '#B48EAD',
+        kind: 'point',
+        label: 'Knotenpunkte NRW'
+    },
+    radnetz_nw: {
+        color: '#D08770',
+        kind: 'line',
+        label: 'Radnetz NRW'
+    },
+    radnetz_nw_netztyp_lokal: {
+        color: '#D08770',
+        kind: 'line',
+        label: 'Radnetz NRW (Lokale Routen)'
+    },
+    radnetz_nw_netztyp_themenroute_auf_radverkehrsnetz_nrw: {
+        color: '#D08770',
+        kind: 'line',
+        label: 'Radnetz NRW (Themenroute auf RVN NRW)'
+    },
+    radnetz_nw_netztyp_themenroute: {
+        color: '#D08770',
+        kind: 'line',
+        label: 'Radnetz NRW (Themenroute)'
+    },
+    radnetz_nw_netztyp_radverkehrsnetz_nrw: {
+        color: '#D08770',
+        kind: 'line',
+        label: 'Radnetz NRW (Radverkehrsnetz NRW)'
+    },
+    radnetz_rcn_osm: {
+        color: '#A3BE8C',
+        kind: 'line',
+        label: 'RCN von OSM'
+    },
+    knotenpunkte_osm: {
+        color: '#5E81AC',
+        kind: 'point',
+        label: 'Knotenpunkte OSM'
+    },
+    knotenpunktnetz_osm: {
+        color: '#5E81AC',
+        kind: 'line',
+        label: 'Knotenpunktnetz OSM'
+    }
+};
+
+const defaultLat = 51.2277;
+const defaultLng = 6.7735;
+const defaultZoom = 12;
+const defaultActiveLayers = ['knotenpunktnetz_nw', 'knotenpunktnetz_osm'];
+
+var lat = defaultLat;
+var lng = defaultLng;
+var zoom = defaultZoom;
+var initialActiveLayers = defaultActiveLayers;
+
+// ── Drag and drop ─────────────────────────────────────────────────────────────
+
+let dragSrc = null;
+let mapInstance = null;
+
+function createLayerItem(layerId) {
+    const { color, kind, label } = targetLayers[layerId];
+    const li = document.createElement('li');
+    li.dataset.layerId = layerId;
+    li.draggable = true;
+    li.className = 'flex items-center gap-2 px-2 py-1.5 text-sm bg-gray-100 rounded cursor-grab select-none';
+
+    const swatch = document.createElement('span');
+    swatch.style.backgroundColor = color;
+    swatch.style.flexShrink = '0';
+    if (kind === 'line') {
+        swatch.style.cssText += 'display:inline-block;width:1.25rem;height:0.5rem;border-radius:9999px;background-color:' + color;
+    } else {
+        swatch.style.cssText += 'display:inline-block;width:0.75rem;height:0.75rem;border-radius:9999px;background-color:' + color;
+    }
+
+    li.append(swatch, document.createTextNode(label));
+
+    li.addEventListener('dragstart', e => {
+        dragSrc = li;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', layerId);
+        requestAnimationFrame(() => li.classList.add('opacity-40'));
+    });
+
+    li.addEventListener('dragend', () => {
+        li.classList.remove('opacity-40');
+        clearDragIndicators();
+        dragSrc = null;
+    });
+
+    return li;
+}
+
+function clearDragIndicators() {
+    document.querySelectorAll('#activeLayers li, #availableLayers li').forEach(el => {
+        el.style.borderTop = '';
+        el.style.borderBottom = '';
+    });
+}
+
+function setupDropTarget(list) {
+    list.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        clearDragIndicators();
+
+        const target = e.target.closest('li[data-layer-id]');
+        if (target && target !== dragSrc) {
+            const rect = target.getBoundingClientRect();
+            if (e.clientY < rect.top + rect.height / 2) {
+                target.style.borderTop = '2px solid #60a5fa';
+            } else {
+                target.style.borderBottom = '2px solid #60a5fa';
+            }
+        }
+    });
+
+    list.addEventListener('dragleave', e => {
+        if (!list.contains(e.relatedTarget)) {
+            clearDragIndicators();
+        }
+    });
+
+    list.addEventListener('drop', e => {
+        e.preventDefault();
+        clearDragIndicators();
+        if (!dragSrc) return;
+
+        const target = e.target.closest('li[data-layer-id]');
+
+        if (target && target !== dragSrc) {
+            const rect = target.getBoundingClientRect();
+            if (e.clientY < rect.top + rect.height / 2) {
+                list.insertBefore(dragSrc, target);
+            } else {
+                list.insertBefore(dragSrc, target.nextSibling);
+            }
+        } else if (!list.contains(dragSrc)) {
+            list.appendChild(dragSrc);
+        }
+
+        if (mapInstance) syncMapLayers(mapInstance);
+    });
+}
+
+// Apply active layer list to the map and save to URL.
+// First item in the list is rendered on top (like Photoshop layer order).
+function syncMapLayers(map) {
+    const activeIds = [...document.getElementById('activeLayers')
+        .querySelectorAll('li[data-layer-id]')]
+        .map(li => li.dataset.layerId);
+
+    Object.keys(targetLayers).forEach(id => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+    });
+
+    // Iterate in reverse: last item moved to top last, so first item ends up on top.
+    [...activeIds].reverse().forEach(id => {
+        if (map.getLayer(id)) {
+            map.setLayoutProperty(id, 'visibility', 'visible');
+            map.moveLayer(id);
+        }
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (activeIds.length > 0) {
+        urlParams.set('layers', activeIds.join(','));
+    } else {
+        urlParams.delete('layers');
+    }
+    window.history.replaceState({}, '', `?${urlParams.toString()}`);
+}
+
+function initLayerPanel(map) {
+    const activeList = document.getElementById('activeLayers');
+    const availableList = document.getElementById('availableLayers');
+    const activeSet = new Set(initialActiveLayers);
+
+    initialActiveLayers.forEach(id => {
+        if (targetLayers[id]) activeList.appendChild(createLayerItem(id));
+    });
+
+    Object.keys(targetLayers).forEach(id => {
+        if (!activeSet.has(id)) availableList.appendChild(createLayerItem(id));
+    });
+
+    setupDropTarget(activeList);
+    setupDropTarget(availableList);
+
+    syncMapLayers(map);
+}
+
+// ── Map setup ─────────────────────────────────────────────────────────────────
+
+function setupMap(lat, lng, zoom) {
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: 'style.json',
+        center: [lng, lat],
+        zoom: zoom
+    });
+
+    mapInstance = map;
+
+    map.getCanvas().addEventListener('click', () => {
+        contextMenu.classList.add('hidden');
+    });
+
+    map.on('contextmenu', (e) => {
+        const { lng, lat } = e.lngLat;
+        const zoom = (map.getZoom() + 2).toFixed(2);
+
+        const osmUrl = `https://www.openstreetmap.org/#map=${zoom}/${lat}/${lng}`;
+        const mapillaryUrl = `https://www.mapillary.com/app/?lat=${lat}&lng=${lng}&z=${zoom}`;
+        osmLink.href = osmUrl;
+        mapillaryLink.href = mapillaryUrl;
+
+        contextMenu.innerHTML = `<a href="${osmUrl}" target="_blank">Open in OSM</a><br><a href="${mapillaryUrl}" target="_blank">Open in Mapillary</a>`;
+        contextMenu.style.left = `${e.point.x}px`;
+        contextMenu.style.top = `${e.point.y}px`;
+        contextMenu.classList.remove('hidden');
+    });
+
+    map.on('load', () => {
+        initLayerPanel(map);
+        document.getElementById('map').classList.remove('hidden');
+        map.resize();
+    });
+
+    map.on('moveend', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const center = map.getCenter();
+        urlParams.set('lat', center.lat.toFixed(5));
+        urlParams.set('lng', center.lng.toFixed(5));
+        urlParams.set('zoom', map.getZoom().toFixed(2));
+        window.history.replaceState({}, '', `?${urlParams.toString()}`);
+    });
+}
+
+// ── Boilerplate ───────────────────────────────────────────────────────────────
+
+function toggleVisibility(id) {
+    document.getElementById(id).classList.toggle('hidden');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    lat = parseFloat(urlParams.get('lat')) || defaultLat;
+    lng = parseFloat(urlParams.get('lng')) || defaultLng;
+    zoom = parseFloat(urlParams.get('zoom')) || defaultZoom;
+
+    const layersParam = urlParams.get('layers');
+    if (layersParam) {
+        initialActiveLayers = layersParam.split(',').filter(id => targetLayers[id]);
+    }
+});
+
+document.getElementById('legal').addEventListener('click', function () {
+    toggleVisibility('legal-content');
+});
+
+document.getElementById('info').addEventListener('click', function () {
+    toggleVisibility('info-content');
+});
+
+document.getElementById('startBtn').addEventListener('click', function () {
+    document.getElementById('cookieModal').classList.add('hidden');
+    document.getElementById('info-container').classList.remove('hidden');
+    document.getElementById('mapMenu').classList.remove('hidden');
+    setupMap(lat, lng, zoom);
+});
