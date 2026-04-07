@@ -250,11 +250,30 @@ function setupMap(lat, lng, zoom) {
     });
 }
 
-// ── Boilerplate ───────────────────────────────────────────────────────────────
+// ── Modals ────────────────────────────────────────────────────────────────────
 
-function toggleVisibility(id) {
-    document.getElementById(id).classList.toggle('hidden');
+function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
 }
+
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
+function handleModalBackdropClick(e, id) {
+    if (e.target === e.currentTarget) closeModal(id);
+}
+
+// ── Layer panel collapse ──────────────────────────────────────────────────────
+
+document.getElementById('layerPanelHeader')?.addEventListener('click', () => {
+    const body = document.getElementById('layerPanelBody');
+    const chevron = document.getElementById('layerPanelChevron');
+    const collapsed = body.classList.toggle('hidden');
+    chevron.textContent = collapsed ? '▼' : '▲';
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -268,17 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-document.getElementById('legal').addEventListener('click', function () {
-    toggleVisibility('legal-content');
-});
-
-document.getElementById('info').addEventListener('click', function () {
-    toggleVisibility('info-content');
-});
-
 document.getElementById('startBtn').addEventListener('click', function () {
-    document.getElementById('cookieModal').classList.add('hidden');
-    document.getElementById('info-container').classList.remove('hidden');
-    document.getElementById('mapMenu').classList.remove('hidden');
+    document.getElementById('disclaimer').classList.add('hidden');
+    document.getElementById('layerPanel').classList.remove('hidden');
     setupMap(lat, lng, zoom);
 });
