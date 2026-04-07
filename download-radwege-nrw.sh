@@ -168,13 +168,13 @@ if [ "$DOWNLOADED" = true ] || [ ! -f "$META" ]; then
         "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${RADNETZ_LM:-}" "${KNOTEN_LM:-}" > "$META"
 fi
 
-# Convert GPKG layers to GeoJSON and build tiles (always regenerate — cheap local step)
-run ogr2ogr -f GeoJSON -skipfailures data/radnetz_nw.geojson data/radnetz_nw.gpkg radnetz_nw
+# Convert GPKG layers to GeoJSON (reproject to WGS84) and build tiles (always regenerate — cheap local step)
+run ogr2ogr -f GeoJSON -t_srs EPSG:4326 -skipfailures data/radnetz_nw.geojson data/radnetz_nw.gpkg radnetz_nw
 run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coalesce-densest --force \
     -l radnetz_nw --output=tiles/radnetz_nw.mbtiles data/radnetz_nw.geojson
 
-run ogr2ogr -f GeoJSON -skipfailures data/knotenpunktnetz_nw.geojson data/knotenpunktnetz_nw.gpkg knotenpunktnetz_nw
-run ogr2ogr -f GeoJSON -skipfailures data/knotenpunkte_nw.geojson    data/knotenpunktnetz_nw.gpkg knotenpunkte_nw
+run ogr2ogr -f GeoJSON -t_srs EPSG:4326 -skipfailures data/knotenpunktnetz_nw.geojson data/knotenpunktnetz_nw.gpkg knotenpunktnetz_nw
+run ogr2ogr -f GeoJSON -t_srs EPSG:4326 -skipfailures data/knotenpunkte_nw.geojson    data/knotenpunktnetz_nw.gpkg knotenpunkte_nw
 run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coalesce-densest --force \
     -l knotenpunktnetz_nw --output=tiles/knotenpunktnetz_nw.mbtiles data/knotenpunktnetz_nw.geojson
 run tippecanoe --maximum-zoom=18 --minimum-zoom=0 --drop-rate=0 --no-line-simplification \

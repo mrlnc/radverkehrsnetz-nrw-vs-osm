@@ -1,91 +1,107 @@
 ![Screenshot of the app](image.png)
 
-Quickly check for missing NRW cycling paths in OpenStreetMap. Any of the red paths are part of the NRW cycling network but not part of OSM.
+Compare the official NRW cycling network (Radverkehrsnetz NRW) against OpenStreetMap data. Highlights paths present in the NRW dataset but missing or incomplete in OSM.
 
-This repo contains the processing pipeline (GPKG -> GeoJSON -> Vector tiles) and a small web app.
+---
 
-# Requirements
+## Requirements
 
-- Docker and Docker Compose must be installed and running
-- No local installation of tools required (everything runs in containers)
+- Docker and Docker Compose
+- ~3 GB free disk space (downloads + tiles)
 
-# Quick Start
+---
 
-1. **Download and process data:**
-   ```bash
-   docker compose -f docker-compose.dataprocessing.yml up
-   ```
+## Setup
 
-   This only needs to run once, and whenever you feel like updating the map data.
-
-2. **Run the full application:**
-   ```bash
-   docker compose -f docker-compose.runtime.yml up
-   ```
-
-3. **Access the app:**
-
-Add these entries to `/etc/hosts`:
-
-```
-127.0.0.1 osm.app.internal
-127.0.0.1 tileserver.osm.app.internal
-127.0.0.1 tiles.osm.app.internal
-```
-
-The app is then available here: `http://osm.app.internal:8080`
-
-# Data Sources
-
-The application compares two data sources:
-
-- **Land NRW** [publishes](https://www.radverkehrsnetz.nrw.de) cycling paths online as open data ([DL-DE->Zero-2.0](https://www.govdata.de/dl-de/zero-2-0), see the [download page](https://www.radverkehrsnetz.nrw.de/rvn_link.asp))
-- **OSM data** can be queried using [Overpass](https://overpass-turbo.eu)
-
-## Licenses
-- OSM license: https://www.openstreetmap.org/copyright
-- Radverkehrsnetz NRW license: DL-DE->Zero-2.0 (see https://www.radverkehrsnetz.nrw.de/rvn_link.asp)
-
-# Development
-
-## Data Processing
-
-Whenever you're changing any of the scripts, remember to re-build the containers.
-
-- **Reprocess data:** `docker compose -f docker-compose.dataprocessing.yml up --force-recreate`
-- **App only:** `docker compose -f docker-compose.runtime.yml up --force-recreate`
-
-## Frontend Development
-
-The project uses TailwindCSS. When changing any of the HTML classes, make sure to update the CSS:
-```bash
-npx @tailwindcss/cli -i public/main.css -o ./src/output.css --watch
-```
-
-## Manual Data Processing (Alternative)
-
-If you prefer to run the data processing manually instead of using Docker:
+### 1. Download and process data
 
 ```bash
-# Install tools locally
-apt install tippecanoe gdal-bin curl
-
-# Build osmtogeojson Docker
-cd osmtogeojson-docker
-docker build -t osmtogeojson .
-cd ..
-
-# Download and process data (change paths in the script first, currently hardcoded to /app/ for Docker)
-./download-osm.sh
-./download-radwege-nrw.sh
+docker compose -f docker-compose.dataprocessing.yml up
 ```
 
-# Architecture
+Downloads NRW GPKG files and the NRW OSM extract (~860 MB), then builds vector tiles. Re-run this whenever you want to refresh the data. Already-downloaded files are skipped; tiles are always regenerated.
 
-- **dataprocessor**: Downloads and processes GPKG/OSM data into vector tiles
-- **tileserver**: Serves vector tiles using MapTiler TileServer GL
-- **nginx**: Reverse proxy serving the web application
+### 2. Start the application
 
-The data processing pipeline converts:
-- NRW GPKG files → GeoJSON → MBTiles
-- OSM Overpass queries → GeoJSON → MBTiles
+```bash
+docker compose -f docker-compose.runtime.yml up
+```
+
+### 3. Add local DNS entries
+
+```
+127.0.0.1  osm.app.internal
+127.0.0.1  tileserver.osm.app.internal
+```
+
+Add these to `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows).
+
+The app is then available at **http://osm.app.internal:8080**
+
+---
+
+## Architecture
+
+| Component | Image | Role |
+|---|---|---|
+| `dataprocessor` | Ubuntu 24.04 + gdal/osmium/tippecanoe | Downloads data, converts GPKG/OSM → GeoJSON → MBTiles |
+| `tileserver` | maptiler/tileserver-gl | Serves vector tiles from MBTiles files |
+| `nginx` | nginx | Serves the frontend, proxies tile requests, caches tiles |
+
+### Data pipeline
+
+**NRW official data:**
+GPKG (EPSG:25832) → `ogr2ogr` (reproject to WGS84) → GeoJSON → `tippecanoe` → MBTiles
+
+**OSM data:**
+Geofabrik PBF → `osmium` (filter by tags) → PBF → `osmium export` → GeoJSON → `tippecanoe` → MBTiles
+
+### Tile sources
+
+| MBTiles file | Content |
+|---|---|
+| `radnetz_nw.mbtiles` | NRW cycling network lines |
+| `knotenpunktnetz_nw.mbtiles` | NRW junction network lines |
+| `knotenpunkte_nw.mbtiles` | NRW junction nodes |
+| `radnetz_rcn_osm.mbtiles` | OSM regional cycling routes |
+| `knotenpunktnetz_osm.mbtiles` | OSM cycling junction network |
+| `knotenpunkte_osm.mbtiles` | OSM cycling junction nodes |
+
+---
+
+## Frontend
+
+Static files in `public/`. No build step required — uses `@tailwindcss/browser` (bundled in `public/thirdparty/`) for CSS generation at runtime.
+
+If you update `public/thirdparty/tailwindcss-browser.js`:
+```bash
+npm install @tailwindcss/browser
+cp node_modules/@tailwindcss/browser/dist/index.global.js public/thirdparty/tailwindcss-browser.js
+```
+
+Map style is defined in `public/style.json`.
+
+---
+
+## Updating data
+
+```bash
+# Re-run data processing (skips downloads if files are current)
+docker compose -f docker-compose.dataprocessing.yml up
+
+# Force re-download of NRW data
+rm data/.nrw_meta && docker compose -f docker-compose.dataprocessing.yml up
+
+# Force re-download of OSM data
+rm data/.osm_meta && docker compose -f docker-compose.dataprocessing.yml up
+```
+
+If tiles don't appear after a re-run, check the tileserver logs and confirm the MBTiles files are non-empty.
+
+---
+
+## Data sources and licenses
+
+- **Radverkehrsnetz NRW**: [radverkehrsnetz.nrw.de](https://www.radverkehrsnetz.nrw.de) — [DL-DE→Zero-2.0](https://www.govdata.de/dl-de/zero-2-0)
+- **OpenStreetMap**: [openstreetmap.org](https://www.openstreetmap.org) — [ODbL](https://www.openstreetmap.org/copyright)
+- **Geofabrik NRW extract**: [download.geofabrik.de](https://download.geofabrik.de/europe/germany/nordrhein-westfalen.html)
