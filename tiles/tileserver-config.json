@@ -22,6 +22,9 @@
     },
     "radnetz_rcn_osm": {
       "mbtiles": "radnetz_rcn_osm.mbtiles"
+    },
+    "baustellen_nw": {
+      "mbtiles": "baustellen_nw.mbtiles"
     }
   }
 }

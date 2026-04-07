@@ -136,6 +136,7 @@ META=data/.nrw_meta
 DOWNLOADED=false
 RADNETZ_LM=""
 KNOTEN_LM=""
+BAUSTELLEN_LM=""
 
 # radnetz_nw.gpkg
 if validate_gpkg "data/radnetz_nw.gpkg" 2>/dev/null; then
@@ -161,11 +162,18 @@ else
     DOWNLOADED=true
 fi
 
+# baustellen_nw.gpkg — always re-download, roadworks change frequently
+download_with_retry \
+    "https://www.radverkehrsnetz.nrw.de/downloads/baustellen_nw.gpkg" \
+    "data/baustellen_nw.gpkg"
+BAUSTELLEN_LM="$_LAST_MODIFIED"
+DOWNLOADED=true
+
 # Write/update metadata if any file was freshly downloaded, or if meta is missing
 if [ "$DOWNLOADED" = true ] || [ ! -f "$META" ]; then
     log_info "Writing NRW metadata..."
-    printf 'NRW_DOWNLOADED_AT="%s"\nRADNETZ_LAST_MODIFIED="%s"\nKNOTENPUNKT_LAST_MODIFIED="%s"\n' \
-        "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${RADNETZ_LM:-}" "${KNOTEN_LM:-}" > "$META"
+    printf 'NRW_DOWNLOADED_AT="%s"\nRADNETZ_LAST_MODIFIED="%s"\nKNOTENPUNKT_LAST_MODIFIED="%s"\nBAUSTELLEN_LAST_MODIFIED="%s"\n' \
+        "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${RADNETZ_LM:-}" "${KNOTEN_LM:-}" "${BAUSTELLEN_LM:-}" > "$META"
 fi
 
 # Convert GPKG layers to GeoJSON (reproject to WGS84) and build tiles (always regenerate — cheap local step)
@@ -180,5 +188,20 @@ run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coale
 run tippecanoe --maximum-zoom=18 --minimum-zoom=0 --drop-rate=0 --no-line-simplification \
     --no-feature-limit --no-tile-size-limit --force \
     -l knotenpunkte_nw --output=tiles/knotenpunkte_nw.mbtiles data/knotenpunkte_nw.geojson
+
+# baustellen_nw.gpkg is already WGS84, no reprojection needed
+run ogr2ogr -f GeoJSON -skipfailures data/baustellen_nw.geojson data/baustellen_nw.gpkg baustellen_nw
+run tippecanoe --maximum-zoom=18 --minimum-zoom=0 --drop-rate=0 \
+    --no-feature-limit --no-tile-size-limit --force \
+    -l baustellen_nw --output=tiles/baustellen_nw.mbtiles data/baustellen_nw.geojson
+
+# Write meta.json for frontend timestamp display
+osm_ts=""
+if [ -f "data/.osm_meta" ]; then
+    osm_ts=$(grep '^OSM_TIMESTAMP=' "data/.osm_meta" | head -1 | sed 's/^OSM_TIMESTAMP="\(.*\)"/\1/')
+fi
+nrw_ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+printf '{"osm_timestamp":"%s","nrw_downloaded_at":"%s"}\n' "$osm_ts" "$nrw_ts" > public/meta.json
+log_ok "Written public/meta.json"
 
 log_ok "All NRW steps completed successfully."

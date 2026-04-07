@@ -7,6 +7,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./tiles:/app/tiles
+      - ./public:/app/public
       - ./download-osm.sh:/app/download-osm.sh:ro
       - ./download-radwege-nrw.sh:/app/download-radwege-nrw.sh:ro
     environment:

@@ -3,62 +3,56 @@ const osmLink = document.getElementById('osmLink');
 const mapillaryLink = document.getElementById('mapillaryLink');
 
 const targetLayers = {
+    baustellen_nw: {
+        color: '#EBCB8B', kind: 'point', source: 'nrw',
+        label: 'Baustellen'
+    },
     knotenpunktnetz_nw: {
-        color: '#BF616A',
-        kind: 'line',
-        label: 'Knotenpunktnetz NRW'
+        color: '#BF616A', kind: 'line', source: 'nrw',
+        label: 'Knotenpunktnetz'
     },
     knotenpunkte_nw: {
-        color: '#B48EAD',
-        kind: 'point',
-        label: 'Knotenpunkte NRW'
+        color: '#D08770', kind: 'point', source: 'nrw',
+        label: 'Knotenpunkte'
     },
     radnetz_nw: {
-        color: '#D08770',
-        kind: 'line',
-        label: 'Radnetz NRW'
-    },
-    radnetz_nw_netztyp_lokal: {
-        color: '#D08770',
-        kind: 'line',
-        label: 'Radnetz NRW (Lokale Routen)'
-    },
-    radnetz_nw_netztyp_themenroute_auf_radverkehrsnetz_nrw: {
-        color: '#D08770',
-        kind: 'line',
-        label: 'Radnetz NRW (Themenroute auf RVN NRW)'
-    },
-    radnetz_nw_netztyp_themenroute: {
-        color: '#D08770',
-        kind: 'line',
-        label: 'Radnetz NRW (Themenroute)'
+        color: '#BF616A', kind: 'line', source: 'nrw',
+        label: 'Radnetz (gesamt)'
     },
     radnetz_nw_netztyp_radverkehrsnetz_nrw: {
-        color: '#D08770',
-        kind: 'line',
-        label: 'Radnetz NRW (Radverkehrsnetz NRW)'
+        color: '#BF616A', kind: 'line', source: 'nrw',
+        label: 'Radnetz (RVN NRW)'
+    },
+    radnetz_nw_netztyp_lokal: {
+        color: '#BF616A', kind: 'line', source: 'nrw',
+        label: 'Radnetz (Lokal)'
+    },
+    radnetz_nw_netztyp_themenroute: {
+        color: '#BF616A', kind: 'line', source: 'nrw',
+        label: 'Radnetz (Themenroute)'
+    },
+    radnetz_nw_netztyp_themenroute_auf_radverkehrsnetz_nrw: {
+        color: '#BF616A', kind: 'line', source: 'nrw',
+        label: 'Radnetz (Themenroute auf RVN)'
     },
     radnetz_rcn_osm: {
-        color: '#A3BE8C',
-        kind: 'line',
-        label: 'RCN von OSM'
+        color: '#88C0D0', kind: 'line', source: 'osm',
+        label: 'Radrouten (RCN)'
     },
     knotenpunkte_osm: {
-        color: '#5E81AC',
-        kind: 'point',
-        label: 'Knotenpunkte OSM'
+        color: '#81A1C1', kind: 'point', source: 'osm',
+        label: 'Knotenpunkte'
     },
     knotenpunktnetz_osm: {
-        color: '#5E81AC',
-        kind: 'line',
-        label: 'Knotenpunktnetz OSM'
+        color: '#5E81AC', kind: 'line', source: 'osm',
+        label: 'Knotenpunktnetz'
     }
 };
 
 const defaultLat = 51.2277;
 const defaultLng = 6.7735;
 const defaultZoom = 12;
-const defaultActiveLayers = ['knotenpunktnetz_nw', 'knotenpunktnetz_osm'];
+const defaultActiveLayers = ['baustellen_nw', 'knotenpunktnetz_nw', 'knotenpunktnetz_osm'];
 
 var lat = defaultLat;
 var lng = defaultLng;
@@ -71,22 +65,34 @@ let dragSrc = null;
 let mapInstance = null;
 
 function createLayerItem(layerId) {
-    const { color, kind, label } = targetLayers[layerId];
+    const { color, kind, label, source } = targetLayers[layerId];
     const li = document.createElement('li');
     li.dataset.layerId = layerId;
     li.draggable = true;
     li.className = 'flex items-center gap-2 px-2 py-1.5 text-sm bg-gray-100 rounded cursor-grab select-none';
 
+    // Fixed-width symbol column so dots and lines stay aligned
+    const symbolWrap = document.createElement('span');
+    symbolWrap.style.cssText = 'flex-shrink:0;width:1.25rem;display:flex;align-items:center;justify-content:center;';
     const swatch = document.createElement('span');
-    swatch.style.backgroundColor = color;
-    swatch.style.flexShrink = '0';
     if (kind === 'line') {
-        swatch.style.cssText += 'display:inline-block;width:1.25rem;height:0.5rem;border-radius:9999px;background-color:' + color;
+        swatch.style.cssText = `display:block;width:1.25rem;height:3px;border-radius:9999px;background:${color}`;
     } else {
-        swatch.style.cssText += 'display:inline-block;width:0.75rem;height:0.75rem;border-radius:9999px;background-color:' + color;
+        swatch.style.cssText = `display:block;width:8px;height:8px;border-radius:9999px;background:${color}`;
     }
+    symbolWrap.appendChild(swatch);
 
-    li.append(swatch, document.createTextNode(label));
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'flex-1 truncate';
+    labelSpan.textContent = label;
+
+    const badge = document.createElement('span');
+    badge.textContent = source === 'nrw' ? 'NRW' : 'OSM';
+    badge.style.cssText = source === 'nrw'
+        ? 'flex-shrink:0;font-size:0.6rem;font-weight:600;padding:1px 5px;border-radius:3px;background:#fef3c7;color:#92400e;'
+        : 'flex-shrink:0;font-size:0.6rem;font-weight:600;padding:1px 5px;border-radius:3px;background:#dbeafe;color:#1e40af;';
+
+    li.append(symbolWrap, labelSpan, badge);
 
     li.addEventListener('dragstart', e => {
         dragSrc = li;
@@ -285,6 +291,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (layersParam) {
         initialActiveLayers = layersParam.split(',').filter(id => targetLayers[id]);
     }
+
+    fetch('meta.json').then(r => r.json()).then(meta => {
+        const el = document.getElementById('dataTimestamp');
+        const parts = [];
+        if (meta.osm_timestamp) {
+            const d = new Date(meta.osm_timestamp);
+            parts.push('OSM: ' + d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' }));
+        }
+        if (meta.nrw_downloaded_at) {
+            const d = new Date(meta.nrw_downloaded_at);
+            parts.push('NRW: ' + d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' }));
+        }
+        if (parts.length > 0) {
+            el.textContent = 'Stand: ' + parts.join(' · ');
+            el.classList.remove('hidden');
+        }
+    }).catch(() => {});
 });
 
 document.getElementById('startBtn').addEventListener('click', function () {

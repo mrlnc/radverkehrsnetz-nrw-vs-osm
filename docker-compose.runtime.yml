@@ -2,9 +2,14 @@ services:
   tileserver:
     image: maptiler/tileserver-gl
     volumes:
-      - ./tiles:/tiles
-    command: --config /tiles/tileserver-config.json --public_url http://tileserver.osm.app.internal:8080 --verbose
+      - ./tiles:/tiles:ro
+    command: --config /tiles/tileserver-config.json --public_url http://osm.app.internal:8080/tiles --verbose
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.0"
 
   nginx:
     image: nginx:latest

@@ -3,33 +3,38 @@
     "sources": {
         "knotenpunktnetz": {
             "type": "vector",
-            "url": "http://tileserver.osm.app.internal:8080/data/knotenpunktnetz_nw.json",
+            "url": "http://osm.app.internal:8080/tiles/data/knotenpunktnetz_nw.json",
             "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "knotenpunkte": {
             "type": "vector",
-            "url": "http://tileserver.osm.app.internal:8080/data/knotenpunkte_nw.json",
+            "url": "http://osm.app.internal:8080/tiles/data/knotenpunkte_nw.json",
             "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "radnetz": {
             "type": "vector",
-            "url": "http://tileserver.osm.app.internal:8080/data/radnetz_nw.json",
+            "url": "http://osm.app.internal:8080/tiles/data/radnetz_nw.json",
             "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "radnetz_rcn_osm": {
             "type": "vector",
-            "url": "http://tileserver.osm.app.internal:8080/data/radnetz_rcn_osm.json",
+            "url": "http://osm.app.internal:8080/tiles/data/radnetz_rcn_osm.json",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
         "knotenpunkte_osm": {
             "type": "vector",
-            "url": "http://tileserver.osm.app.internal:8080/data/knotenpunkte_osm.json",
+            "url": "http://osm.app.internal:8080/tiles/data/knotenpunkte_osm.json",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
         "knotenpunktnetz_osm": {
             "type": "vector",
-            "url": "http://tileserver.osm.app.internal:8080/data/knotenpunktnetz_osm.json",
+            "url": "http://osm.app.internal:8080/tiles/data/knotenpunktnetz_osm.json",
             "attribution": "&copy; OpenStreetMap Contributors"
+        },
+        "baustellen_nw": {
+            "type": "vector",
+            "url": "http://osm.app.internal:8080/tiles/data/baustellen_nw.json",
+            "attribution": "Radverkehrsnetz NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "osm": {
             "type": "raster",
@@ -60,7 +65,7 @@
             },
             "paint": {
                 "circle-radius": 8,
-                "circle-color": "#B48EAD"
+                "circle-color": "#D08770"
             }
         },
         {
@@ -73,7 +78,7 @@
             },
             "paint": {
                 "circle-radius": 8,
-                "circle-color": "#5E81AC"
+                "circle-color": "#81A1C1"
             }
         },
         {
@@ -125,7 +130,7 @@
             "type": "line",
             "source": "radnetz",
             "source-layer": "radnetz_nw",
-            "filter": ["==", "netztyp", "Radverkehrsnetz NRW"],
+            "filter": ["==", "netztyp", "Radverkersnetz NRW"],
             "layout": {
                 "line-join": "round",
                 "line-cap": "round",
@@ -153,7 +158,6 @@
                 "line-join": "round",
                 "line-cap": "round",
                 "visibility": "none"
-
             },
             "paint": {
                 "line-color": "#BF616A",
@@ -172,7 +176,7 @@
             "type": "line",
             "source": "radnetz",
             "source-layer": "radnetz_nw",
-            "filter": ["==", "netztyp", "Themenroute auf Radverkehrsnetz NRW"],
+            "filter": ["==", "netztyp", "Themenroute auf Radverkersnetz NRW"],
             "layout": {
                 "line-join": "round",
                 "line-cap": "round",
@@ -223,7 +227,7 @@
                 "line-cap": "round"
             },
             "paint": {
-                "line-color": "#A3BE8C",
+                "line-color": "#88C0D0",
                 "line-width": [
                     "interpolate",
                     [ "linear" ],
@@ -232,6 +236,26 @@
                     10, 2,
                     15, 5
                 ]
+            }
+        },
+        {
+            "id": "baustellen_nw",
+            "type": "circle",
+            "source": "baustellen_nw",
+            "source-layer": "baustellen_nw",
+            "layout": {
+                "visibility": "visible"
+            },
+            "paint": {
+                "circle-radius": [
+                    "interpolate", ["linear"], ["zoom"],
+                    8, 4,
+                    12, 7,
+                    16, 11
+                ],
+                "circle-color": "#EBCB8B",
+                "circle-stroke-width": 1.5,
+                "circle-stroke-color": "#8B6914"
             }
         },
         {
