@@ -138,10 +138,33 @@ RADNETZ_LM=""
 KNOTEN_LM=""
 BAUSTELLEN_LM=""
 
+# Load stored Last-Modified dates from the previous run.
+RADNETZ_LAST_MODIFIED=""; KNOTENPUNKT_LAST_MODIFIED=""
+[ -f "$META" ] && source "$META"
+
+# Fetch Last-Modified header without downloading the body.
+head_last_modified() {
+    curl -sI --connect-timeout 10 --max-time 15 "$1" 2>/dev/null \
+        | grep -i '^last-modified:' | tail -1 | tr -d '\r' \
+        | sed 's/^[Ll]ast-[Mm]odified: *//'
+}
+
+# Returns 0 (needs download) if server version is newer than stored, 1 if up to date.
+server_is_newer() {
+    local server_lm="$1" stored="$2"
+    [ -z "$server_lm" ] && return 1   # server unreachable — assume current, skip
+    [ -z "$stored"    ] && return 0   # no stored date — always download
+    local s l
+    s=$(date -d "$server_lm" +%s 2>/dev/null || echo 0)
+    l=$(date -d "$stored"    +%s 2>/dev/null || echo 0)
+    [ "$s" -gt "$l" ]
+}
+
 # radnetz_nw.gpkg
-if validate_gpkg "data/radnetz_nw.gpkg" 2>/dev/null; then
-    size_mb=$(( $(stat -c%s "data/radnetz_nw.gpkg") / 1048576 ))
-    log_ok "radnetz_nw.gpkg already present (${size_mb} MB) — skipping download"
+_server_lm=$(head_last_modified "https://www.radverkehrsnetz.nrw.de/downloads/radnetz_nw.gpkg")
+if validate_gpkg "data/radnetz_nw.gpkg" 2>/dev/null \
+        && ! server_is_newer "$_server_lm" "$RADNETZ_LAST_MODIFIED"; then
+    log_ok "radnetz_nw.gpkg up to date — skipping download"
 else
     download_with_retry \
         "https://www.radverkehrsnetz.nrw.de/downloads/radnetz_nw.gpkg" \
@@ -151,9 +174,10 @@ else
 fi
 
 # knotenpunktnetz_nw.gpkg
-if validate_gpkg "data/knotenpunktnetz_nw.gpkg" 2>/dev/null; then
-    size_mb=$(( $(stat -c%s "data/knotenpunktnetz_nw.gpkg") / 1048576 ))
-    log_ok "knotenpunktnetz_nw.gpkg already present (${size_mb} MB) — skipping download"
+_server_lm=$(head_last_modified "https://www.radverkehrsnetz.nrw.de/downloads/knotenpunktnetz_nw.gpkg")
+if validate_gpkg "data/knotenpunktnetz_nw.gpkg" 2>/dev/null \
+        && ! server_is_newer "$_server_lm" "$KNOTENPUNKT_LAST_MODIFIED"; then
+    log_ok "knotenpunktnetz_nw.gpkg up to date — skipping download"
 else
     download_with_retry \
         "https://www.radverkehrsnetz.nrw.de/downloads/knotenpunktnetz_nw.gpkg" \

@@ -78,15 +78,21 @@ download_with_retry() {
     while [ "$attempt" -le "$max_retries" ]; do
         log_info "Downloading $url → $output (attempt $attempt/$max_retries)..."
 
+        local header_file
+        header_file=$(mktemp)
         local http_code
         http_code=$(curl --progress-bar --location \
             --connect-timeout 30 --max-time 1800 \
             --write-out "%{http_code}" \
+            --dump-header "$header_file" \
             -o "$output" "$url" 2>/dev/tty || echo "000")
 
         case "$http_code" in
             200)
                 if [ -z "$validator" ] || "$validator" "$output"; then
+                    _LAST_MODIFIED=$(grep -i '^last-modified:' "$header_file" \
+                        | tail -1 | tr -d '\r' | sed 's/^[Ll]ast-[Mm]odified: *//')
+                    rm -f "$header_file"
                     return 0
                 fi
                 log_warn "File validation failed. Retrying in ${delay}s..."
@@ -102,7 +108,7 @@ download_with_retry() {
                 ;;
         esac
 
-        rm -f "$output"
+        rm -f "$header_file" "$output"
         sleep_with_progress "$delay"
         delay=$((delay * 2))
         attempt=$((attempt + 1))
@@ -116,11 +122,36 @@ mkdir -p /app/data /app/tiles
 
 PBF=/app/data/nordrhein-westfalen-latest.osm.pbf
 META=/app/data/.osm_meta
+_LAST_MODIFIED=""
+
+# Load stored Last-Modified from previous run.
+OSM_SERVER_LAST_MODIFIED=""
+[ -f "$META" ] && source "$META"
+
+# Fetch Last-Modified header without downloading the body.
+head_last_modified() {
+    curl -sIL --connect-timeout 10 --max-time 15 "$1" 2>/dev/null \
+        | grep -i '^last-modified:' | tail -1 | tr -d '\r' \
+        | sed 's/^[Ll]ast-[Mm]odified: *//'
+}
+
+# Returns 0 (needs download) if server version is newer than stored, 1 if up to date.
+server_is_newer() {
+    local server_lm="$1" stored="$2"
+    [ -z "$server_lm" ] && return 1   # server unreachable — assume current, skip
+    [ -z "$stored"    ] && return 0   # no stored date — always download
+    local s l
+    s=$(date -d "$server_lm" +%s 2>/dev/null || echo 0)
+    l=$(date -d "$stored"    +%s 2>/dev/null || echo 0)
+    [ "$s" -gt "$l" ]
+}
 
 # Download NRW extract from Geofabrik (~400 MB, updated daily)
-if validate_osm_pbf "$PBF"; then
+_server_lm=$(head_last_modified \
+    "https://download.geofabrik.de/europe/germany/nordrhein-westfalen-latest.osm.pbf")
+if validate_osm_pbf "$PBF" && ! server_is_newer "$_server_lm" "$OSM_SERVER_LAST_MODIFIED"; then
     size_mb=$(( $(stat -c%s "$PBF") / 1048576 ))
-    log_ok "PBF already present and valid (${size_mb} MB) — skipping download"
+    log_ok "PBF up to date (${size_mb} MB) — skipping download"
 else
     download_with_retry \
         "https://download.geofabrik.de/europe/germany/nordrhein-westfalen-latest.osm.pbf" \
@@ -128,14 +159,14 @@ else
         validate_osm_pbf
 fi
 
-# Write metadata if not yet recorded (records OSM replication timestamp for status.sh)
-if [ ! -f "$META" ]; then
-    log_info "Writing OSM metadata..."
-    osm_ts=$(osmium fileinfo -g header.option.osmosis_replication_timestamp "$PBF" 2>/dev/null | tr -d '[:space:]' || true)
-    pbf_size=$(stat -c%s "$PBF" 2>/dev/null || stat -f%z "$PBF")
-    printf 'OSM_DOWNLOADED_AT="%s"\nOSM_TIMESTAMP="%s"\nOSM_PBF_SIZE="%s"\n' \
-        "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${osm_ts:-unknown}" "$pbf_size" > "$META"
-fi
+# Write metadata after every run (updates OSM replication timestamp and server LM)
+log_info "Writing OSM metadata..."
+osm_ts=$(osmium fileinfo -g header.option.osmosis_replication_timestamp "$PBF" 2>/dev/null \
+    | tr -d '[:space:]' || true)
+pbf_size=$(stat -c%s "$PBF" 2>/dev/null || stat -f%z "$PBF")
+printf 'OSM_DOWNLOADED_AT="%s"\nOSM_TIMESTAMP="%s"\nOSM_PBF_SIZE="%s"\nOSM_SERVER_LAST_MODIFIED="%s"\n' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${osm_ts:-unknown}" "$pbf_size" \
+    "${_LAST_MODIFIED:-$OSM_SERVER_LAST_MODIFIED}" > "$META"
 
 # Dataset: all RCN routes in NRW (always regenerate — cheap local step)
 run osmium tags-filter "$PBF" r/network=rcn \

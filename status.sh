@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Shows the current state of all downloaded data and tiles.
 # Reads metadata written by the download scripts and does lightweight
-# HEAD requests to check whether the NRW server has newer data.
+# HEAD requests to check whether upstream sources have newer data.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA="$SCRIPT_DIR/data"
@@ -21,15 +21,13 @@ info()    { printf "      ${CYAN}$*${NC}\n"; }
 header()  { printf "\n${BOLD}$*${NC}\n"; }
 
 mb() {
-    local file="$1"
     local size
-    size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo 0)
+    size=$(stat -c%s "$1" 2>/dev/null || stat -f%z "$1" 2>/dev/null || echo 0)
     echo "$(( size / 1048576 )) MB"
 }
 
 file_status() {
-    local label="$1"
-    local file="$2"
+    local label="$1" file="$2"
     if [ -f "$file" ]; then
         ok "$label  $(mb "$file")"
     else
@@ -37,29 +35,51 @@ file_status() {
     fi
 }
 
-# Fetch the Last-Modified header from a URL without downloading the body.
+# Fetch Last-Modified header without downloading the body.
 server_last_modified() {
-    local url="$1"
-    curl -sI --connect-timeout 10 --max-time 15 "$url" 2>/dev/null \
-        | grep -i '^last-modified:' | tail -1 | tr -d '\r' | sed 's/^[Ll]ast-[Mm]odified: *//'
+    curl -sIL --connect-timeout 10 --max-time 15 "$1" 2>/dev/null \
+        | grep -i '^last-modified:' | tail -1 | tr -d '\r' \
+        | sed 's/^[Ll]ast-[Mm]odified: *//'
 }
 
-# Compare server Last-Modified to local file mtime.
-# Prints "NEWER", "current", or "unknown".
-freshness() {
-    local server_lm="$1"
-    local local_file="$2"
+# Compare two date strings (HTTP or ISO 8601). Prints "NEWER" or "current".
+is_newer() {
+    local remote="$1" local_date="$2"
+    local remote_ts local_ts
+    remote_ts=$(date -d "$remote"     +%s 2>/dev/null || echo 0)
+    local_ts=$(date  -d "$local_date" +%s 2>/dev/null || echo 0)
+    [ "$remote_ts" -gt "$local_ts" ] && echo "NEWER" || echo "current"
+}
+
+STALE=()   # collects which sources need updating
+
+# Check one upstream source.
+# Usage: check_freshness <label> <url> <local_date_iso>
+check_freshness() {
+    local label="$1" url="$2" local_date="$3"
+    local server_lm result remote_fmt
+
+    server_lm=$(server_last_modified "$url")
+
     if [ -z "$server_lm" ]; then
-        echo "unknown"
+        info "$label — server not reachable, skipping"
         return
     fi
-    local server_epoch local_epoch
-    server_epoch=$(date -d "$server_lm" +%s 2>/dev/null || echo 0)
-    local_epoch=$(stat -c%Y "$local_file" 2>/dev/null || echo 0)
-    if [ "$server_epoch" -gt "$local_epoch" ]; then
-        echo "NEWER"
+
+    remote_fmt=$(date -d "$server_lm" '+%Y-%m-%d' 2>/dev/null || echo "$server_lm")
+
+    if [ -z "$local_date" ]; then
+        warn "$label — no local date recorded, assuming stale (server: $remote_fmt)"
+        STALE+=("$label")
+        return
+    fi
+
+    result=$(is_newer "$server_lm" "$local_date")
+    if [ "$result" = "NEWER" ]; then
+        warn "$label — server has newer data ($remote_fmt)"
+        STALE+=("$label")
     else
-        echo "current"
+        info "$label — up to date (server: $remote_fmt)"
     fi
 }
 
@@ -69,22 +89,16 @@ printf "${BOLD}=== Radverkehrsnetz NRW vs OSM — Data Status ===${NC}\n"
 header "OSM  (Geofabrik NRW extract)"
 
 OSM_META="$DATA/.osm_meta"
-OSM_DOWNLOADED_AT=""
-OSM_TIMESTAMP=""
-OSM_PBF_SIZE=""
-if [ -f "$OSM_META" ]; then
-    # shellcheck source=/dev/null
-    source "$OSM_META"
-fi
+OSM_DOWNLOADED_AT=""; OSM_TIMESTAMP=""; OSM_PBF_SIZE=""; OSM_SERVER_LAST_MODIFIED=""
+[ -f "$OSM_META" ] && source "$OSM_META"
 
 PBF="$DATA/nordrhein-westfalen-latest.osm.pbf"
 if [ -f "$PBF" ]; then
     ok "nordrhein-westfalen-latest.osm.pbf  $(mb "$PBF")"
-    [ -n "$OSM_TIMESTAMP" ]    && info "OSM data as of   $OSM_TIMESTAMP"
+    [ -n "$OSM_TIMESTAMP" ]     && info "OSM data as of   $OSM_TIMESTAMP"
     [ -n "$OSM_DOWNLOADED_AT" ] && info "Downloaded       $OSM_DOWNLOADED_AT"
 else
     missing "nordrhein-westfalen-latest.osm.pbf"
-    info "Run: docker compose -f docker-compose.dataprocessing.yml up"
 fi
 
 printf "\n  Tiles\n"
@@ -96,19 +110,12 @@ file_status "knotenpunkte_osm.mbtiles   " "$TILES/knotenpunkte_osm.mbtiles"
 header "NRW  (radverkehrsnetz.nrw.de)"
 
 NRW_META="$DATA/.nrw_meta"
-NRW_DOWNLOADED_AT=""
-RADNETZ_LAST_MODIFIED=""
-KNOTENPUNKT_LAST_MODIFIED=""
-if [ -f "$NRW_META" ]; then
-    # shellcheck source=/dev/null
-    source "$NRW_META"
-fi
-
-RADNETZ_URL="https://www.radverkehrsnetz.nrw.de/downloads/radnetz_nw.gpkg"
-KNOTEN_URL="https://www.radverkehrsnetz.nrw.de/downloads/knotenpunktnetz_nw.gpkg"
+NRW_DOWNLOADED_AT=""; RADNETZ_LAST_MODIFIED=""; KNOTENPUNKT_LAST_MODIFIED=""; BAUSTELLEN_LAST_MODIFIED=""
+[ -f "$NRW_META" ] && source "$NRW_META"
 
 RADNETZ_FILE="$DATA/radnetz_nw.gpkg"
 KNOTEN_FILE="$DATA/knotenpunktnetz_nw.gpkg"
+BAUSTELLEN_FILE="$DATA/baustellen_nw.gpkg"
 
 if [ -f "$RADNETZ_FILE" ]; then
     ok "radnetz_nw.gpkg          $(mb "$RADNETZ_FILE")"
@@ -124,34 +131,71 @@ else
     missing "knotenpunktnetz_nw.gpkg"
 fi
 
-[ -n "$NRW_DOWNLOADED_AT" ] && info "Downloaded       $NRW_DOWNLOADED_AT"
-
-# Check if the server has newer NRW data (requires network access)
-if [ -f "$RADNETZ_FILE" ] || [ -f "$KNOTEN_FILE" ]; then
-    printf "\n  Checking server for updates..."
-    SERVER_LM=$(server_last_modified "$RADNETZ_URL")
-    printf "\r%40s\r" ""
-
-    if [ -n "$SERVER_LM" ] && [ -f "$RADNETZ_FILE" ]; then
-        case "$(freshness "$SERVER_LM" "$RADNETZ_FILE")" in
-            NEWER)   warn "Server has a newer version ($SERVER_LM) — re-run download-radwege-nrw.sh" ;;
-            current) info "Server version matches local file" ;;
-            *)       info "Could not determine server version" ;;
-        esac
-    elif [ -z "$SERVER_LM" ]; then
-        info "Server not reachable — skipping freshness check"
-    fi
+if [ -f "$BAUSTELLEN_FILE" ]; then
+    ok "baustellen_nw.gpkg       $(mb "$BAUSTELLEN_FILE")"
+    [ -n "$BAUSTELLEN_LAST_MODIFIED" ] && info "Server version   $BAUSTELLEN_LAST_MODIFIED"
+else
+    missing "baustellen_nw.gpkg"
 fi
+
+[ -n "$NRW_DOWNLOADED_AT" ] && info "Downloaded       $NRW_DOWNLOADED_AT"
 
 printf "\n  Tiles\n"
 file_status "radnetz_nw.mbtiles         " "$TILES/radnetz_nw.mbtiles"
 file_status "knotenpunktnetz_nw.mbtiles " "$TILES/knotenpunktnetz_nw.mbtiles"
 file_status "knotenpunkte_nw.mbtiles    " "$TILES/knotenpunkte_nw.mbtiles"
+file_status "baustellen_nw.mbtiles      " "$TILES/baustellen_nw.mbtiles"
+
+# ── Freshness checks (network) ────────────────────────────────────────────────
+header "Update check"
+
+# Use stored Last-Modified if available, otherwise fall back to download date
+nrw_ref="${RADNETZ_LAST_MODIFIED:-$NRW_DOWNLOADED_AT}"
+knoten_ref="${KNOTENPUNKT_LAST_MODIFIED:-$NRW_DOWNLOADED_AT}"
+baustellen_ref="${BAUSTELLEN_LAST_MODIFIED:-$NRW_DOWNLOADED_AT}"
+
+printf "  Checking upstream sources..."
+osm_lm=$(server_last_modified \
+    "https://download.geofabrik.de/europe/germany/nordrhein-westfalen-latest.osm.pbf")
+radnetz_lm=$(server_last_modified \
+    "https://www.radverkehrsnetz.nrw.de/downloads/radnetz_nw.gpkg")
+knoten_lm=$(server_last_modified \
+    "https://www.radverkehrsnetz.nrw.de/downloads/knotenpunktnetz_nw.gpkg")
+baustellen_lm=$(server_last_modified \
+    "https://www.radverkehrsnetz.nrw.de/downloads/baustellen_nw.gpkg")
+printf "\r%40s\r" ""
+
+# Evaluate each
+_check() {
+    local label="$1" server_lm="$2" local_date="$3"
+    local remote_fmt result
+    remote_fmt=$(date -d "$server_lm" '+%Y-%m-%d' 2>/dev/null || echo "$server_lm")
+    if [ -z "$server_lm" ]; then
+        info "$label — server not reachable"
+        return
+    fi
+    if [ -z "$local_date" ]; then
+        warn "$label — no local date recorded, run the pipeline"
+        STALE+=("$label"); return
+    fi
+    result=$(is_newer "$server_lm" "$local_date")
+    if [ "$result" = "NEWER" ]; then
+        warn "$label — update available ($remote_fmt)"
+        STALE+=("$label")
+    else
+        info "$label — up to date ($remote_fmt)"
+    fi
+}
+
+_check "nordrhein-westfalen.osm.pbf" "$osm_lm"       "${OSM_SERVER_LAST_MODIFIED:-$OSM_DOWNLOADED_AT}"
+_check "radnetz_nw.gpkg"             "$radnetz_lm"   "$nrw_ref"
+_check "knotenpunktnetz_nw.gpkg"     "$knoten_lm"    "$knoten_ref"
+_check "baustellen_nw.gpkg"          "$baustellen_lm" "$baustellen_ref"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 printf "\n"
 
-MISSING=0
+MISSING_COUNT=0
 for f in \
     "$DATA/nordrhein-westfalen-latest.osm.pbf" \
     "$DATA/radnetz_nw.gpkg" \
@@ -161,12 +205,17 @@ for f in \
     "$TILES/knotenpunkte_osm.mbtiles" \
     "$TILES/radnetz_nw.mbtiles" \
     "$TILES/knotenpunktnetz_nw.mbtiles" \
-    "$TILES/knotenpunkte_nw.mbtiles"; do
-    [ -f "$f" ] || MISSING=$(( MISSING + 1 ))
+    "$TILES/knotenpunkte_nw.mbtiles" \
+    "$TILES/baustellen_nw.mbtiles"; do
+    [ -f "$f" ] || MISSING_COUNT=$(( MISSING_COUNT + 1 ))
 done
 
-if [ "$MISSING" -eq 0 ]; then
-    printf "${GREEN}${BOLD}All data present.${NC}\n\n"
+if [ "$MISSING_COUNT" -gt 0 ]; then
+    printf "${RED}${BOLD}$MISSING_COUNT file(s) missing.${NC}\n\n"
+fi
+
+if [ "${#STALE[@]}" -gt 0 ] || [ "$MISSING_COUNT" -gt 0 ]; then
+    printf "${YELLOW}${BOLD}Updates available. Run the download pipeline to refresh.${NC}\n\n"
 else
-    printf "${YELLOW}${BOLD}$MISSING file(s) missing.${NC}  Run: docker compose -f docker-compose.dataprocessing.yml up\n\n"
+    printf "${GREEN}${BOLD}All data present and up to date.${NC}\n\n"
 fi

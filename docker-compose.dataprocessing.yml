@@ -10,6 +10,7 @@ services:
       - ./public:/app/public
       - ./download-osm.sh:/app/download-osm.sh:ro
       - ./download-radwege-nrw.sh:/app/download-radwege-nrw.sh:ro
+      - ./status.sh:/app/status.sh:ro
     environment:
       - TZ=Europe/Berlin
     command: sh -c "./download-osm.sh && ./download-radwege-nrw.sh"
