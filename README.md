@@ -1,5 +1,8 @@
 ![Screenshot of the app](image.png)
 
+> [!CAUTION]
+> This project is mostly about me trying out Claude Code and similar tools.
+
 Compare the official NRW cycling network (Radverkehrsnetz NRW) against OpenStreetMap data. Highlights paths present in the NRW dataset but missing or incomplete in OSM.
 
 ---
@@ -7,7 +10,7 @@ Compare the official NRW cycling network (Radverkehrsnetz NRW) against OpenStree
 ## Requirements
 
 - Docker and Docker Compose
-- ~3 GB free disk space (downloads + tiles)
+- ~4 GB free disk space (downloads + tiles + nginx cache)
 
 ---
 
@@ -98,6 +101,7 @@ Geofabrik PBF → `osmium` (filter by tags) → PBF → `osmium export` → GeoJ
 | `knotenpunkte_nw.mbtiles` | NRW junction nodes |
 | `baustellen_nw.mbtiles` | NRW roadworks (points) |
 | `radnetz_rcn_osm.mbtiles` | OSM regional cycling routes |
+| `r_radwege_nrw_osm.mbtiles` | OSM R-Radwege NRW routes |
 | `knotenpunktnetz_osm.mbtiles` | OSM cycling junction network |
 | `knotenpunkte_osm.mbtiles` | OSM cycling junction nodes |
 
@@ -105,7 +109,7 @@ Geofabrik PBF → `osmium` (filter by tags) → PBF → `osmium export` → GeoJ
 
 ## Frontend
 
-Static files in `public/`. No build step — uses `@tailwindcss/browser` (bundled in `public/thirdparty/`) for CSS at runtime.
+Static files in `public/`. No build step — uses `@tailwindcss/browser` (bundled in `public/thirdparty/`) to process Tailwind classes at runtime. Custom styles are in `public/main.css`.
 
 Map style is defined in `public/style.json`.
 

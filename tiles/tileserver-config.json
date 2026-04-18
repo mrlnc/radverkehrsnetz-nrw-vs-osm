@@ -25,6 +25,9 @@
     },
     "baustellen_nw": {
       "mbtiles": "baustellen_nw.mbtiles"
+    },
+    "r_radwege_nrw_osm": {
+      "mbtiles": "r_radwege_nrw_osm.mbtiles"
     }
   }
 }

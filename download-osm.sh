@@ -196,4 +196,12 @@ run tippecanoe --maximum-zoom=18 --minimum-zoom=0 --drop-rate=0 --no-line-simpli
     --no-feature-limit --no-tile-size-limit --force \
     -l knotenpunkte_osm --output=/app/tiles/knotenpunkte_osm.mbtiles /app/data/knotenpunkte_osm.geojson
 
+# Dataset: R-Radwege NRW (relations named R<n> [NRW])
+run osmium tags-filter "$PBF" 'r/name=*[NRW]*' \
+    -o /app/data/r_radwege_nrw_osm.osm.pbf --overwrite
+run osmium export /app/data/r_radwege_nrw_osm.osm.pbf \
+    -o /app/data/r_radwege_nrw_osm.geojson --overwrite
+run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coalesce-densest --force \
+    -l r_radwege_nrw_osm --output=/app/tiles/r_radwege_nrw_osm.mbtiles /app/data/r_radwege_nrw_osm.geojson
+
 log_ok "All OSM steps completed successfully."

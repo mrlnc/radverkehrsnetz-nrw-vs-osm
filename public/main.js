@@ -39,6 +39,10 @@ const targetLayers = {
         color: '#88C0D0', kind: 'line', source: 'osm',
         label: 'Radrouten (RCN)'
     },
+    r_radwege_nrw_osm: {
+        color: '#9B59B6', kind: 'line', source: 'osm',
+        label: 'R-Radwege NRW'
+    },
     knotenpunkte_osm: {
         color: '#81A1C1', kind: 'point', source: 'osm',
         label: 'Knotenpunkte'

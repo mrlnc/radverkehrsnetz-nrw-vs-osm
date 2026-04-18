@@ -3,38 +3,43 @@
     "sources": {
         "knotenpunktnetz": {
             "type": "vector",
-            "url": "http://osm.app.internal:8080/tiles/data/knotenpunktnetz_nw.json",
+            "url": "/tiles/data/knotenpunktnetz_nw.json",
             "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "knotenpunkte": {
             "type": "vector",
-            "url": "http://osm.app.internal:8080/tiles/data/knotenpunkte_nw.json",
+            "url": "/tiles/data/knotenpunkte_nw.json",
             "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "radnetz": {
             "type": "vector",
-            "url": "http://osm.app.internal:8080/tiles/data/radnetz_nw.json",
+            "url": "/tiles/data/radnetz_nw.json",
             "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "radnetz_rcn_osm": {
             "type": "vector",
-            "url": "http://osm.app.internal:8080/tiles/data/radnetz_rcn_osm.json",
+            "url": "/tiles/data/radnetz_rcn_osm.json",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
         "knotenpunkte_osm": {
             "type": "vector",
-            "url": "http://osm.app.internal:8080/tiles/data/knotenpunkte_osm.json",
+            "url": "/tiles/data/knotenpunkte_osm.json",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
         "knotenpunktnetz_osm": {
             "type": "vector",
-            "url": "http://osm.app.internal:8080/tiles/data/knotenpunktnetz_osm.json",
+            "url": "/tiles/data/knotenpunktnetz_osm.json",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
         "baustellen_nw": {
             "type": "vector",
-            "url": "http://osm.app.internal:8080/tiles/data/baustellen_nw.json",
+            "url": "/tiles/data/baustellen_nw.json",
             "attribution": "Radverkehrsnetz NRW (Lizenz DL-DE->Zero-2.0)"
+        },
+        "r_radwege_nrw_osm": {
+            "type": "vector",
+            "url": "/tiles/data/r_radwege_nrw_osm.json",
+            "attribution": "&copy; OpenStreetMap Contributors"
         },
         "osm": {
             "type": "raster",
@@ -256,6 +261,28 @@
                 "circle-color": "#EBCB8B",
                 "circle-stroke-width": 1.5,
                 "circle-stroke-color": "#8B6914"
+            }
+        },
+        {
+            "id": "r_radwege_nrw_osm",
+            "type": "line",
+            "source": "r_radwege_nrw_osm",
+            "source-layer": "r_radwege_nrw_osm",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round",
+                "visibility": "none"
+            },
+            "paint": {
+                "line-color": "#9B59B6",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
             }
         },
         {
