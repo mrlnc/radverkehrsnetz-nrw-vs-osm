@@ -30,8 +30,8 @@
       </p>
       <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 space-y-1">
         <p>
-          <strong>Datenschutz:</strong> Diese Seite setzt keine Cookies und erhebt keine personenbezogenen Daten.
-          Die Hintergrundkarte wird direkt von OpenStreetMap-Servern geladen – dabei wird Ihre IP-Adresse übertragen
+          <strong>Datenschutz:</strong> Diese Seite verwendet keine Cookies, kein Tracking und keine Analyse-Dienste.
+          Die Hintergrundkarte wird direkt von OpenStreetMap-Servern geladen – dabei wird Ihre IP-Adresse an die OSM Foundation übertragen
           (<a href="https://osmfoundation.org/wiki/Privacy_Policy" class="underline" target="_blank">OSM-Datenschutzerklärung</a>).
         </p>
       </div>
@@ -133,15 +133,26 @@
         </div>
         <div>
           <h3 class="font-semibold text-gray-800 mb-1">Datenschutz</h3>
-          <p>
-            Diese Seite verwendet keine Cookies und erhebt keine personenbezogenen Daten.
-            Die Hintergrundkarte wird von OpenStreetMap-Servern geladen; dabei wird Ihre IP-Adresse übertragen.
-          </p>
+          <div class="space-y-2">
+            <p>
+              Diese Seite verwendet keine Cookies, kein Tracking und keine Analyse-Dienste.
+            </p>
+            <p>
+              <strong class="text-gray-700">Serverzugriffsdaten:</strong> Beim Aufruf dieser Seite speichert der Webserver technisch bedingt Zugriffsdaten (IP-Adresse, Zeitstempel, aufgerufene URL) im Zugriffsprotokoll. Diese Daten werden nicht an Dritte weitergegeben. Rechtsgrundlage ist Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;f DSGVO (berechtigtes Interesse am sicheren Betrieb).
+            </p>
+            <p>
+              <strong class="text-gray-700">Hintergrundkarte:</strong> Die Kartenkacheln werden direkt von Servern der OpenStreetMap Foundation (OSMF), Cambridge, Großbritannien, geladen. Dabei wird Ihre IP-Adresse an die OSMF übertragen. Es gilt die <a href="https://osmfoundation.org/wiki/Privacy_Policy" class="underline text-blue-600" target="_blank">Datenschutzerklärung der OSMF</a>.
+            </p>
+            <p>
+              <strong class="text-gray-700">Ihre Rechte:</strong> Sie haben das Recht auf Auskunft (Art.&nbsp;15 DSGVO), Berichtigung (Art.&nbsp;16), Löschung (Art.&nbsp;17) und Widerspruch (Art.&nbsp;21). Wenden Sie sich dazu an die im Impressum genannte Person.
+            </p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <script src="thirdparty/proj4.js"></script>
   <script src="thirdparty/maplibre-gl.js"></script>
   <script src="main.js"></script>
 

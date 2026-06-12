@@ -2,6 +2,8 @@ const contextMenu = document.getElementById('context-menu');
 const osmLink = document.getElementById('osmLink');
 const mapillaryLink = document.getElementById('mapillaryLink');
 
+proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs');
+
 const targetLayers = {
     baustellen_nw: {
         color: '#EBCB8B', kind: 'point', source: 'nrw',
@@ -235,10 +237,12 @@ function setupMap(lat, lng, zoom) {
 
         const osmUrl = `https://www.openstreetmap.org/#map=${zoom}/${lat}/${lng}`;
         const mapillaryUrl = `https://www.mapillary.com/app/?lat=${lat}&lng=${lng}&z=${zoom}`;
+        const [rvnX, rvnY] = proj4('EPSG:4326', 'EPSG:25832', [lng, lat]).map(Math.round);
+        const rvnUrl = `https://www.radroutenplaner.nrw.de/Link/rrpAufrufMarker.html?x=${rvnX}&y=${rvnY}`;
         osmLink.href = osmUrl;
         mapillaryLink.href = mapillaryUrl;
 
-        contextMenu.innerHTML = `<a href="${osmUrl}" target="_blank">Open in OSM</a><br><a href="${mapillaryUrl}" target="_blank">Open in Mapillary</a>`;
+        contextMenu.innerHTML = `<a href="${osmUrl}" target="_blank">Open in OSM</a><br><a href="${mapillaryUrl}" target="_blank">Open in Mapillary</a><br><a href="${rvnUrl}" target="_blank">Im RVN-Planer öffnen</a>`;
         contextMenu.style.left = `${e.point.x}px`;
         contextMenu.style.top = `${e.point.y}px`;
         contextMenu.classList.remove('hidden');
@@ -308,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
             parts.push('NRW: ' + d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' }));
         }
         if (parts.length > 0) {
-            el.textContent = 'Stand: ' + parts.join(' · ');
+            el.textContent = 'Stand der Karten · ' + parts.join(' · ');
             el.classList.remove('hidden');
         }
     }).catch(() => {});

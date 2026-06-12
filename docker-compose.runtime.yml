@@ -5,6 +5,11 @@ services:
       - ./tiles:/tiles:ro
     command: --config /tiles/tileserver-config.json --public_url ${PUBLIC_URL:-http://osm.app.internal:8080}/tiles --verbose
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     deploy:
       resources:
         limits:
@@ -19,5 +24,10 @@ services:
       - ./public:/usr/share/nginx/html:ro
       - ./reverse-proxy.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       - tileserver
