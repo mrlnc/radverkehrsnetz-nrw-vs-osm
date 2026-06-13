@@ -27,11 +27,10 @@ Add to `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Wi
 ### 2. Download and process data
 
 ```bash
-docker compose -f docker-compose.dataprocessing.yml run --rm dataprocessor \
-  sh -c "./download-osm.sh && ./download-radwege-nrw.sh"
+docker compose -f docker-compose.dataprocessing.yml run --rm dataprocessor
 ```
 
-Downloads the NRW GPKG files and NRW OSM extract (~860 MB), then builds vector tiles. Files are skipped if the server has no newer version; tiles are always regenerated from whatever data is present.
+Downloads the NRW GPKG files and NRW OSM extract (~860 MB), builds vector tiles, then runs the spatial diff. Files are skipped if the server has no newer version; tiles are always regenerated from whatever data is present.
 
 ### 3. Start the application
 
@@ -55,7 +54,7 @@ Shows which files are present, when they were downloaded, and whether the upstre
 
 ### Update data
 
-Re-run the download command from step 2. The scripts compare the server's `Last-Modified` header against what was last downloaded and only fetch what has changed.
+Re-run the command from step 2. The download scripts compare the server's `Last-Modified` header against what was last downloaded and only fetch what has changed. The diff is always recomputed at the end.
 
 To force a re-download regardless of version, delete the metadata file first:
 
@@ -104,6 +103,11 @@ Geofabrik PBF → `osmium` (filter by tags) → PBF → `osmium export` → GeoJ
 | `r_radwege_nrw_osm.mbtiles` | OSM R-Radwege NRW routes |
 | `knotenpunktnetz_osm.mbtiles` | OSM cycling junction network |
 | `knotenpunkte_osm.mbtiles` | OSM cycling junction nodes |
+| `network_diff.mbtiles` | Knotenpunktnetz diff — red: NRW-only gaps, blue: OSM-only segments |
+
+### Diff
+
+`diff.sh` runs after both download scripts. It compares `knotenpunktnetz_nw.geojson` against `knotenpunktnetz_osm.geojson` with a 25 m spatial buffer and writes `diff/network_diff.geojson` + `tiles/network_diff.mbtiles`. `diff.py` accepts `--nrw-file`, `--osm-file`, `--out-file`, and `--buffer-m` if you want to compare other layer pairs.
 
 ---
 

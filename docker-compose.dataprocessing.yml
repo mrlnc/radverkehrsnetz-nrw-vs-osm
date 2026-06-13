@@ -7,12 +7,15 @@ services:
     volumes:
       - ./data:/app/data
       - ./tiles:/app/tiles
+      - ./diff:/app/diff
       - ./public:/app/public
       - ./download-osm.sh:/app/download-osm.sh:ro
       - ./download-radwege-nrw.sh:/app/download-radwege-nrw.sh:ro
       - ./status.sh:/app/status.sh:ro
+      - ./diff.py:/app/diff.py:ro
+      - ./diff.sh:/app/diff.sh:ro
     environment:
       - TZ=Europe/Berlin
-    command: sh -c "./download-osm.sh && ./download-radwege-nrw.sh"
+    command: sh -c "./download-osm.sh && ./download-radwege-nrw.sh && ./diff.sh"
     tty: true
     restart: "no"
