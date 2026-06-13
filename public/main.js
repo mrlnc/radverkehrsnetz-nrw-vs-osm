@@ -7,55 +7,68 @@ proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs');
 const targetLayers = {
     baustellen_nw: {
         color: '#EBCB8B', kind: 'point', source: 'nrw',
-        label: 'Baustellen'
+        label: 'Baustellen',
+        description: 'Aktuelle Baustellen aus dem NRW-Radverkehrsnetz-Datensatz.'
     },
     knotenpunktnetz_nw: {
         color: '#BF616A', kind: 'line', source: 'nrw',
-        label: 'Knotenpunktnetz'
+        label: 'Knotenpunktnetz',
+        description: 'Offizielle Verbindungslinien des nummerierten Knotenpunktnetzes NRW.'
     },
     knotenpunkte_nw: {
         color: '#D08770', kind: 'point', source: 'nrw',
-        label: 'Knotenpunkte'
+        label: 'Knotenpunkte',
+        description: 'Einzelne Knotenpunkte (Wegweiser-Standorte) des NRW-Netzes.'
     },
     radnetz_nw: {
         color: '#BF616A', kind: 'line', source: 'nrw',
-        label: 'Radnetz (gesamt)'
+        label: 'Radnetz (gesamt)',
+        description: 'Gesamtes Radverkehrsnetz NRW – alle Netztypen zusammen.'
     },
     radnetz_nw_netztyp_radverkehrsnetz_nrw: {
         color: '#BF616A', kind: 'line', source: 'nrw',
-        label: 'Radnetz (RVN NRW)'
+        label: 'Radnetz (RVN NRW)',
+        description: 'Nur Strecken des Typs „Radverkehrsnetz NRW" – das landesweite Hauptnetz.'
     },
     radnetz_nw_netztyp_lokal: {
         color: '#BF616A', kind: 'line', source: 'nrw',
-        label: 'Radnetz (Lokal)'
+        label: 'Radnetz (Lokal)',
+        description: 'Lokale Ergänzungsrouten aus dem NRW-Datensatz.'
     },
     radnetz_nw_netztyp_themenroute: {
         color: '#BF616A', kind: 'line', source: 'nrw',
-        label: 'Radnetz (Themenroute)'
+        label: 'Radnetz (Themenroute)',
+        description: 'Thematische Routen (z.B. historische Pfade, Flussradwege).'
     },
     radnetz_nw_netztyp_themenroute_auf_radverkehrsnetz_nrw: {
         color: '#BF616A', kind: 'line', source: 'nrw',
-        label: 'Radnetz (Themenroute auf RVN)'
+        label: 'Radnetz (Themenroute auf RVN)',
+        description: 'Themenrouten, die gleichzeitig auf dem Hauptradverkehrsnetz verlaufen.'
     },
     radnetz_rcn_osm: {
         color: '#88C0D0', kind: 'line', source: 'osm',
-        label: 'Radrouten (RCN)'
+        label: 'Radrouten (RCN)',
+        description: 'Überregionale Radrouten (Regional Cycling Network) aus OSM.'
     },
     r_radwege_nrw_osm: {
         color: '#9B59B6', kind: 'line', source: 'osm',
-        label: 'R-Radwege NRW'
+        label: 'R-Radwege NRW',
+        description: 'R-Radfernwege NRW wie sie in OSM erfasst sind (network=rcn, ref=R*).'
     },
     knotenpunkte_osm: {
         color: '#81A1C1', kind: 'point', source: 'osm',
-        label: 'Knotenpunkte'
+        label: 'Knotenpunkte',
+        description: 'Knotenpunkte in OSM (Nodes mit rcn_ref-Tag).'
     },
     knotenpunktnetz_osm: {
         color: '#5E81AC', kind: 'line', source: 'osm',
-        label: 'Knotenpunktnetz'
+        label: 'Knotenpunktnetz',
+        description: 'Knotenpunktnetz in OSM – Wege mit rcn_ref oder network=rcn.'
     },
     network_diff: {
         color: 'linear-gradient(to right,#BF616A 50%,#88C0D0 50%)', kind: 'line', source: 'diff',
-        label: 'Knotenpunktnetz - Diff'
+        label: 'Knotenpunktnetz - Diff',
+        description: '<span style="color:#f87171">■ Rot</span> Im NRW-Netz vorhanden, in OSM fehlend – potenzielle Lücke.<br><br><span style="color:#93c5fd">■ Blau</span> In OSM vorhanden, fehlt im NRW-Netz.<br><br>Abgleich mit 25&thinsp;m Puffer.'
     }
 };
 
@@ -69,13 +82,32 @@ var lng = defaultLng;
 var zoom = defaultZoom;
 var initialActiveLayers = defaultActiveLayers;
 
+// ── Layer tooltips ────────────────────────────────────────────────────────────
+
+function showLayerTooltip(anchor, html) {
+    const tooltip = document.getElementById('layerTooltip');
+    tooltip.innerHTML = html;
+    tooltip.style.visibility = 'hidden';
+    tooltip.classList.remove('hidden');
+    const rect = anchor.getBoundingClientRect();
+    const panel = document.getElementById('layerPanel').getBoundingClientRect();
+    const top = Math.min(rect.top, window.innerHeight - tooltip.offsetHeight - 8);
+    tooltip.style.left = `${panel.right + 8}px`;
+    tooltip.style.top = `${top}px`;
+    tooltip.style.visibility = '';
+}
+
+function hideLayerTooltip() {
+    document.getElementById('layerTooltip').classList.add('hidden');
+}
+
 // ── Drag and drop ─────────────────────────────────────────────────────────────
 
 let dragSrc = null;
 let mapInstance = null;
 
 function createLayerItem(layerId) {
-    const { color, kind, label, source } = targetLayers[layerId];
+    const { color, kind, label, source, description } = targetLayers[layerId];
     const li = document.createElement('li');
     li.dataset.layerId = layerId;
     li.draggable = true;
@@ -105,7 +137,16 @@ function createLayerItem(layerId) {
         ? 'flex-shrink:0;font-size:0.6rem;font-weight:600;padding:1px 5px;border-radius:3px;background:#ede9fe;color:#5b21b6;'
         : 'flex-shrink:0;font-size:0.6rem;font-weight:600;padding:1px 5px;border-radius:3px;background:#dbeafe;color:#1e40af;';
 
-    li.append(symbolWrap, labelSpan, badge);
+    if (description) {
+        const infoBtn = document.createElement('button');
+        infoBtn.textContent = 'ⓘ';
+        infoBtn.style.cssText = 'flex-shrink:0;font-size:0.7rem;color:#9ca3af;padding:0 1px;line-height:1;cursor:default;';
+        infoBtn.addEventListener('mouseenter', () => showLayerTooltip(infoBtn, description));
+        infoBtn.addEventListener('mouseleave', hideLayerTooltip);
+        li.append(symbolWrap, labelSpan, infoBtn, badge);
+    } else {
+        li.append(symbolWrap, labelSpan, badge);
+    }
 
     li.addEventListener('dragstart', e => {
         dragSrc = li;
