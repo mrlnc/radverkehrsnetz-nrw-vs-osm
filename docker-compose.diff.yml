@@ -1,0 +1,13 @@
+
+services:
+  diff:
+    build:
+      context: .
+      dockerfile: Dockerfile.diff
+    volumes:
+      - ./data:/app/data:ro
+      - ./diff:/app/diff
+      - ./diff.py:/app/diff.py:ro
+    environment:
+      - TZ=Europe/Berlin
+    restart: "no"

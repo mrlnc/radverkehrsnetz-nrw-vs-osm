@@ -28,6 +28,9 @@
     },
     "r_radwege_nrw_osm": {
       "mbtiles": "r_radwege_nrw_osm.mbtiles"
+    },
+    "network_diff": {
+      "mbtiles": "network_diff.mbtiles"
     }
   }
 }

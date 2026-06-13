@@ -41,6 +41,11 @@
             "url": "/tiles/data/r_radwege_nrw_osm.json",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
+        "network_diff": {
+            "type": "vector",
+            "url": "/tiles/data/network_diff.json",
+            "attribution": "Radnetz Land NRW &amp; &copy; OpenStreetMap Contributors"
+        },
         "osm": {
             "type": "raster",
             "tiles": [
@@ -275,6 +280,32 @@
             },
             "paint": {
                 "line-color": "#9B59B6",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
+            }
+        },
+        {
+            "id": "network_diff",
+            "type": "line",
+            "source": "network_diff",
+            "source-layer": "network_diff",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round",
+                "visibility": "none"
+            },
+            "paint": {
+                "line-color": [
+                    "match", ["get", "diff_type"],
+                    "nrw_only", "#BF616A",
+                    "#88C0D0"
+                ],
                 "line-width": [
                     "interpolate",
                     [ "linear" ],

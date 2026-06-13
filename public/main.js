@@ -52,6 +52,10 @@ const targetLayers = {
     knotenpunktnetz_osm: {
         color: '#5E81AC', kind: 'line', source: 'osm',
         label: 'Knotenpunktnetz'
+    },
+    network_diff: {
+        color: 'linear-gradient(to right,#BF616A 50%,#88C0D0 50%)', kind: 'line', source: 'diff',
+        label: 'Knotenpunktnetz - Diff'
     }
 };
 
@@ -82,7 +86,8 @@ function createLayerItem(layerId) {
     symbolWrap.style.cssText = 'flex-shrink:0;width:1.25rem;display:flex;align-items:center;justify-content:center;';
     const swatch = document.createElement('span');
     if (kind === 'line') {
-        swatch.style.cssText = `display:block;width:1.25rem;height:3px;border-radius:9999px;background:${color}`;
+        swatch.style.cssText = `display:block;width:1.25rem;height:3px;border-radius:9999px;background:${color.startsWith('linear') ? 'transparent' : color}`;
+        if (color.startsWith('linear')) swatch.style.backgroundImage = color;
     } else {
         swatch.style.cssText = `display:block;width:8px;height:8px;border-radius:9999px;background:${color}`;
     }
@@ -93,9 +98,11 @@ function createLayerItem(layerId) {
     labelSpan.textContent = label;
 
     const badge = document.createElement('span');
-    badge.textContent = source === 'nrw' ? 'NRW' : 'OSM';
+    badge.textContent = source === 'nrw' ? 'NRW' : source === 'diff' ? 'DIFF' : 'OSM';
     badge.style.cssText = source === 'nrw'
         ? 'flex-shrink:0;font-size:0.6rem;font-weight:600;padding:1px 5px;border-radius:3px;background:#fef3c7;color:#92400e;'
+        : source === 'diff'
+        ? 'flex-shrink:0;font-size:0.6rem;font-weight:600;padding:1px 5px;border-radius:3px;background:#ede9fe;color:#5b21b6;'
         : 'flex-shrink:0;font-size:0.6rem;font-weight:600;padding:1px 5px;border-radius:3px;background:#dbeafe;color:#1e40af;';
 
     li.append(symbolWrap, labelSpan, badge);
