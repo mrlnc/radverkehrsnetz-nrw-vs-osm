@@ -17,12 +17,11 @@ services:
           cpus: "1.0"
 
   nginx:
-    image: nginx:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
     ports:
       - "8080:80"
-    volumes:
-      - ./public:/usr/share/nginx/html:ro
-      - ./reverse-proxy.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped
     logging:
       driver: json-file
