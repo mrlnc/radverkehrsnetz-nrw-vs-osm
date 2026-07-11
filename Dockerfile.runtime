@@ -11,6 +11,7 @@ COPY src ./src
 RUN mkdir -p public/thirdparty \
     && cp node_modules/maplibre-gl/dist/maplibre-gl.css public/thirdparty/maplibre-gl.css \
     && cp node_modules/maplibre-gl/dist/maplibre-gl.js public/thirdparty/maplibre-gl.js \
+    && cp node_modules/maplibre-gl/dist/maplibre-gl.js.map public/thirdparty/maplibre-gl.js.map \
     && cp node_modules/proj4/dist/proj4.js public/thirdparty/proj4.js \
     && cp node_modules/@tailwindcss/browser/dist/index.global.js public/thirdparty/tailwindcss-browser.js
 
