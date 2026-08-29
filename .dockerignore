@@ -1,0 +1,15 @@
+.git
+.gitignore
+.dockerignore
+.vscode
+.venv
+node_modules
+public/thirdparty
+
+data
+diff
+tiles/*.mbtiles
+tiles/*.pmtiles
+*.mbtiles
+*.pmtiles
+*.geojson

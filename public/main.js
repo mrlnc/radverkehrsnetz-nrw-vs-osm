@@ -1,6 +1,7 @@
 const contextMenu = document.getElementById('context-menu');
 const osmLink = document.getElementById('osmLink');
 const mapillaryLink = document.getElementById('mapillaryLink');
+const rvnLink = document.getElementById('rvnLink');
 
 proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs');
 
@@ -9,62 +10,62 @@ maplibregl.addProtocol('pmtiles', pmtilesProtocol.tile);
 
 const targetLayers = {
     baustellen_nw: {
-        color: '#EBCB8B', kind: 'point', source: 'nrw',
+        kind: 'point', source: 'nrw',
         label: 'Baustellen',
         description: 'Aktuelle Baustellen aus dem NRW-Radverkehrsnetz-Datensatz.'
     },
     knotenpunktnetz_nw: {
-        color: '#BF616A', kind: 'line', source: 'nrw',
+        kind: 'line', source: 'nrw',
         label: 'Knotenpunktnetz',
         description: 'Offizielle Verbindungslinien des nummerierten Knotenpunktnetzes NRW.'
     },
     knotenpunkte_nw: {
-        color: '#D08770', kind: 'point', source: 'nrw',
+        kind: 'point', source: 'nrw',
         label: 'Knotenpunkte',
         description: 'Einzelne Knotenpunkte (Wegweiser-Standorte) des NRW-Netzes.'
     },
     radnetz_nw: {
-        color: '#BF616A', kind: 'line', source: 'nrw',
+        kind: 'line', source: 'nrw',
         label: 'Radnetz (gesamt)',
         description: 'Gesamtes Radverkehrsnetz NRW – alle Netztypen zusammen.'
     },
     radnetz_nw_netztyp_radverkehrsnetz_nrw: {
-        color: '#BF616A', kind: 'line', source: 'nrw',
+        kind: 'line', source: 'nrw',
         label: 'Radnetz (RVN NRW)',
         description: 'Nur Strecken des Typs „Radverkehrsnetz NRW" – das landesweite Hauptnetz.'
     },
     radnetz_nw_netztyp_lokal: {
-        color: '#BF616A', kind: 'line', source: 'nrw',
+        kind: 'line', source: 'nrw',
         label: 'Radnetz (Lokal)',
         description: 'Lokale Ergänzungsrouten aus dem NRW-Datensatz.'
     },
     radnetz_nw_netztyp_themenroute: {
-        color: '#BF616A', kind: 'line', source: 'nrw',
+        kind: 'line', source: 'nrw',
         label: 'Radnetz (Themenroute)',
         description: 'Thematische Routen (z.B. historische Pfade, Flussradwege).'
     },
     radnetz_nw_netztyp_themenroute_auf_radverkehrsnetz_nrw: {
-        color: '#BF616A', kind: 'line', source: 'nrw',
+        kind: 'line', source: 'nrw',
         label: 'Radnetz (Themenroute auf RVN)',
         description: 'Themenrouten, die gleichzeitig auf dem Hauptradverkehrsnetz verlaufen.'
     },
     radnetz_rcn_osm: {
-        color: '#88C0D0', kind: 'line', source: 'osm',
+        kind: 'line', source: 'osm',
         label: 'Radrouten (RCN)',
         description: 'Überregionale Radrouten (Regional Cycling Network) aus OSM.'
     },
     r_radwege_nrw_osm: {
-        color: '#9B59B6', kind: 'line', source: 'osm',
+        kind: 'line', source: 'osm',
         label: 'R-Radwege NRW',
         description: 'R-Radfernwege NRW wie sie in OSM erfasst sind (network=rcn, ref=R*).'
     },
     knotenpunkte_osm: {
-        color: '#81A1C1', kind: 'point', source: 'osm',
+        kind: 'point', source: 'osm',
         label: 'Knotenpunkte',
         description: 'Knotenpunkte in OSM (Nodes mit rcn_ref-Tag).'
     },
     knotenpunktnetz_osm: {
-        color: '#5E81AC', kind: 'line', source: 'osm',
+        kind: 'line', source: 'osm',
         label: 'Knotenpunktnetz',
         description: 'Knotenpunktnetz in OSM – Wege mit rcn_ref oder network=rcn.'
     },
@@ -74,6 +75,48 @@ const targetLayers = {
         description: '<span style="color:#f87171">■ Rot</span> Im NRW-Netz vorhanden, in OSM fehlend – potenzielle Lücke.<br><br><span style="color:#93c5fd">■ Blau</span> In OSM vorhanden, fehlt im NRW-Netz.<br><br>Abgleich mit 25&thinsp;m Puffer.'
     }
 };
+
+// Okabe–Ito palette: chosen for maximum mutual contrast (colorblind-safe),
+// not per-layer identity. A layer's color isn't fixed in advance — it's
+// handed out from this pool the moment the layer is activated (see
+// syncMapLayers), so whatever combination gets toggled on always draws
+// distinguishable colors, regardless of which combination that turns out
+// to be. Once assigned, a color stays with its layer until deactivated —
+// activating/deactivating or reordering OTHER layers never reassigns it.
+// network_diff is excluded: it's already categorically colored by diff_type.
+const COLOR_POOL = ['#E69F00', '#0072B2', '#009E73', '#D55E00', '#CC79A7', '#56B4E9', '#F0E442', '#000000'];
+const INACTIVE_COLOR = '#D1D5DB'; // gray-300 — not yet assigned a slot
+const DYNAMIC_COLOR_LAYERS = Object.keys(targetLayers).filter(id => id !== 'network_diff');
+const activeColors = new Map(); // layerId -> assigned color, persists across syncs for stability
+
+function paintPropForKind(kind) {
+    return kind === 'line' ? 'line-color' : 'circle-color';
+}
+
+function setSwatchColor(layerId, color) {
+    const li = document.querySelector(`li[data-layer-id="${layerId}"]`);
+    const swatch = li?.querySelector('.layer-swatch');
+    if (!swatch) return;
+    swatch.style.backgroundImage = '';
+    swatch.style.background = color;
+}
+
+// Presets set up a specific comparison in one click: the layer array order
+// is the stacking order (first = on top, see syncMapLayers), so putting
+// layer A on top of layer B means "wherever A has no data, B shows through" —
+// i.e. B's uncovered bits are exactly what's missing from A.
+const presets = [
+    {
+        id: 'missing_in_osm',
+        label: 'Fehlende Knotenpunkte in OSM',
+        layers: ['knotenpunktnetz_osm', 'knotenpunktnetz_nw']
+    },
+    {
+        id: 'missing_in_nrw',
+        label: 'Fehlende Knotenpunkte im NRW-Netz',
+        layers: ['knotenpunktnetz_nw', 'knotenpunktnetz_osm']
+    }
+];
 
 const defaultLat = 51.2277;
 const defaultLng = 6.7735;
@@ -111,6 +154,9 @@ let mapInstance = null;
 
 function createLayerItem(layerId) {
     const { color, kind, label, source, description } = targetLayers[layerId];
+    // network_diff has a fixed gradient swatch (already categorically colored);
+    // everything else starts neutral until it's activated and gets a pool slot.
+    const initialColor = color || INACTIVE_COLOR;
     const li = document.createElement('li');
     li.dataset.layerId = layerId;
     li.draggable = true;
@@ -120,11 +166,12 @@ function createLayerItem(layerId) {
     const symbolWrap = document.createElement('span');
     symbolWrap.style.cssText = 'flex-shrink:0;width:1.25rem;display:flex;align-items:center;justify-content:center;';
     const swatch = document.createElement('span');
+    swatch.className = 'layer-swatch';
     if (kind === 'line') {
-        swatch.style.cssText = `display:block;width:1.25rem;height:3px;border-radius:9999px;background:${color.startsWith('linear') ? 'transparent' : color}`;
-        if (color.startsWith('linear')) swatch.style.backgroundImage = color;
+        swatch.style.cssText = `display:block;width:1.25rem;height:3px;border-radius:9999px;background:${initialColor.startsWith('linear') ? 'transparent' : initialColor}`;
+        if (initialColor.startsWith('linear')) swatch.style.backgroundImage = initialColor;
     } else {
-        swatch.style.cssText = `display:block;width:8px;height:8px;border-radius:9999px;background:${color}`;
+        swatch.style.cssText = `display:block;width:8px;height:8px;border-radius:9999px;background:${initialColor}`;
     }
     symbolWrap.appendChild(swatch);
 
@@ -169,8 +216,7 @@ function createLayerItem(layerId) {
 
 function clearDragIndicators() {
     document.querySelectorAll('#activeLayers li, #availableLayers li').forEach(el => {
-        el.style.borderTop = '';
-        el.style.borderBottom = '';
+        el.classList.remove('drag-over-top', 'drag-over-bottom');
     });
 }
 
@@ -184,9 +230,9 @@ function setupDropTarget(list) {
         if (target && target !== dragSrc) {
             const rect = target.getBoundingClientRect();
             if (e.clientY < rect.top + rect.height / 2) {
-                target.style.borderTop = '2px solid #60a5fa';
+                target.classList.add('drag-over-top');
             } else {
-                target.style.borderBottom = '2px solid #60a5fa';
+                target.classList.add('drag-over-bottom');
             }
         }
     });
@@ -238,6 +284,31 @@ function syncMapLayers(map) {
         }
     });
 
+    // Dynamic color pool, but stable: a color is assigned once, when a layer
+    // activates, and kept until it deactivates. Activating/deactivating or
+    // reordering other layers never touches an already-assigned color.
+    const activeSet = new Set(activeIds.filter(id => DYNAMIC_COLOR_LAYERS.includes(id)));
+
+    [...activeColors.keys()].forEach(id => {
+        if (!activeSet.has(id)) {
+            activeColors.delete(id);
+            setSwatchColor(id, INACTIVE_COLOR);
+        }
+    });
+
+    activeSet.forEach(id => {
+        if (activeColors.has(id)) return;
+        const used = new Set(activeColors.values());
+        const color = COLOR_POOL.find(c => !used.has(c)) || COLOR_POOL[activeColors.size % COLOR_POOL.length];
+        activeColors.set(id, color);
+    });
+
+    activeSet.forEach(id => {
+        const color = activeColors.get(id);
+        if (map.getLayer(id)) map.setPaintProperty(id, paintPropForKind(targetLayers[id].kind), color);
+        setSwatchColor(id, color);
+    });
+
     const urlParams = new URLSearchParams(window.location.search);
     if (activeIds.length > 0) {
         urlParams.set('layers', activeIds.join(','));
@@ -245,6 +316,36 @@ function syncMapLayers(map) {
         urlParams.delete('layers');
     }
     window.history.replaceState({}, '', `?${urlParams.toString()}`);
+}
+
+// Replace the active layer set with a preset's layers, in the given order.
+function applyPreset(map, layerIds) {
+    const activeList = document.getElementById('activeLayers');
+    const availableList = document.getElementById('availableLayers');
+    const activeSet = new Set(layerIds);
+
+    activeList.innerHTML = '';
+    availableList.innerHTML = '';
+
+    layerIds.forEach(id => {
+        if (targetLayers[id]) activeList.appendChild(createLayerItem(id));
+    });
+    Object.keys(targetLayers).forEach(id => {
+        if (!activeSet.has(id)) availableList.appendChild(createLayerItem(id));
+    });
+
+    syncMapLayers(map);
+}
+
+function initPresetButtons(map) {
+    const container = document.getElementById('presetButtons');
+    presets.forEach(preset => {
+        const btn = document.createElement('button');
+        btn.textContent = preset.label;
+        btn.className = 'w-full text-left text-sm px-2 py-1.5 rounded-lg border border-[#5E81AC]/30 bg-[#5E81AC]/10 text-[#5E81AC] font-medium hover:bg-[#5E81AC] hover:text-white hover:border-[#5E81AC] transition-colors';
+        btn.addEventListener('click', () => applyPreset(map, preset.layers));
+        container.appendChild(btn);
+    });
 }
 
 function initLayerPanel(map) {
@@ -262,6 +363,7 @@ function initLayerPanel(map) {
 
     setupDropTarget(activeList);
     setupDropTarget(availableList);
+    initPresetButtons(map);
 
     syncMapLayers(map);
 }
@@ -273,7 +375,8 @@ function setupMap(lat, lng, zoom) {
         container: 'map',
         style: 'style.json',
         center: [lng, lat],
-        zoom: zoom
+        zoom: zoom,
+        attributionControl: false // custom credit line in the bottom bar covers this
     });
 
     mapInstance = map;
@@ -292,17 +395,29 @@ function setupMap(lat, lng, zoom) {
         const rvnUrl = `https://www.radroutenplaner.nrw.de/Link/rrpAufrufMarker.html?x=${rvnX}&y=${rvnY}`;
         osmLink.href = osmUrl;
         mapillaryLink.href = mapillaryUrl;
+        rvnLink.href = rvnUrl;
 
-        contextMenu.innerHTML = `<a href="${osmUrl}" target="_blank">Open in OSM</a><br><a href="${mapillaryUrl}" target="_blank">Open in Mapillary</a><br><a href="${rvnUrl}" target="_blank">Im RVN-Planer öffnen</a>`;
         contextMenu.style.left = `${e.point.x}px`;
         contextMenu.style.top = `${e.point.y}px`;
         contextMenu.classList.remove('hidden');
     });
 
+    let mapLoaded = false;
+
     map.on('load', () => {
+        mapLoaded = true;
         initLayerPanel(map);
         document.getElementById('map').classList.remove('hidden');
+        document.getElementById('mapLoading').classList.add('hidden');
         map.resize();
+    });
+
+    map.on('error', (e) => {
+        console.error('MapLibre error:', e.error);
+        if (!mapLoaded) {
+            document.getElementById('mapLoadingSpinner').classList.add('hidden');
+            document.getElementById('mapLoadingText').textContent = 'Karte konnte nicht geladen werden.';
+        }
     });
 
     map.on('moveend', () => {
@@ -372,5 +487,6 @@ document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('startBtn').addEventListener('click', function () {
     document.getElementById('disclaimer').classList.add('hidden');
     document.getElementById('layerPanel').classList.remove('hidden');
+    document.getElementById('mapLoading').classList.remove('hidden');
     setupMap(lat, lng, zoom);
 });

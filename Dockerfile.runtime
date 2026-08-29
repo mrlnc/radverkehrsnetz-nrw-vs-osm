@@ -21,3 +21,6 @@ FROM nginx:alpine
 
 COPY --from=frontend-builder /app/public /usr/share/nginx/html
 COPY reverse-proxy.conf /etc/nginx/nginx.conf
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget --quiet --spider http://127.0.0.1/ || exit 1
