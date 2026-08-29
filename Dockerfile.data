@@ -10,6 +10,22 @@ RUN apt-get update && apt-get install -y \
     && pip3 install --break-system-packages --no-cache-dir geopandas shapely pyproj \
     && rm -rf /var/lib/apt/lists/*
 
+# go-pmtiles: converts MBTiles -> PMTiles for static, serverless tile hosting.
+# No apt package exists for this, so pull the pinned release binary directly.
+# TARGETARCH is populated automatically by BuildKit (amd64 / arm64).
+ARG TARGETARCH
+ARG PMTILES_VERSION=1.31.2
+RUN case "$TARGETARCH" in \
+        amd64) PMTILES_ARCH=x86_64; PMTILES_SHA256=3ed7dbf4ec2e6dfe5e25b6f70d1ffc932729f93c86db353bf514dd71010a312f ;; \
+        arm64) PMTILES_ARCH=arm64;  PMTILES_SHA256=f8bd47e7ea866863489cad588fbaf2f31f42e5821f7a03f009b3769f05801cb1 ;; \
+        *) echo "unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;; \
+    esac \
+    && curl -sL -o /tmp/go-pmtiles.tar.gz \
+        "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_${PMTILES_ARCH}.tar.gz" \
+    && echo "${PMTILES_SHA256}  /tmp/go-pmtiles.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/go-pmtiles.tar.gz -C /usr/local/bin pmtiles \
+    && rm /tmp/go-pmtiles.tar.gz
+
 WORKDIR /app
 
 COPY download-osm.sh download-radwege-nrw.sh diff.py ./

@@ -10,7 +10,7 @@ Compare the official NRW cycling network (Radverkehrsnetz NRW) against OpenStree
 ## Requirements
 
 - Docker and Docker Compose
-- ~4 GB free disk space (downloads + tiles + nginx cache)
+- ~4 GB free disk space (downloads + MBTiles + PMTiles)
 
 ---
 
@@ -63,13 +63,7 @@ rm data/.nrw_meta   # force re-download of NRW data
 rm data/.osm_meta   # force re-download of OSM extract
 ```
 
-After updating data, restart the tileserver and clear the tile cache:
-
-```bash
-docker compose -f docker-compose.runtime.yml restart tileserver
-docker compose -f docker-compose.runtime.yml exec nginx sh -c "rm -rf /var/cache/nginx/tileserver"
-docker compose -f docker-compose.runtime.yml restart nginx
-```
+Tiles are static PMTiles files served straight off disk, so there's no server-side cache or process to restart — nginx picks up the new files on the next request. PMTiles responses are sent with a 24h `Cache-Control` header (see `reverse-proxy.conf`), so a browser that already loaded a layer may keep serving it from its own cache for up to a day after an update.
 
 ---
 
@@ -77,37 +71,38 @@ docker compose -f docker-compose.runtime.yml restart nginx
 
 | Component | Image | Role |
 |---|---|---|
-| `dataprocessor` | Ubuntu 24.04 + gdal/osmium/tippecanoe | Downloads data, converts GPKG/OSM → GeoJSON → MBTiles |
-| `tileserver` | maptiler/tileserver-gl | Serves vector tiles from MBTiles files |
-| `nginx` | nginx | Serves the frontend, proxies tile requests, caches tiles |
+| `dataprocessor` | Ubuntu 24.04 + gdal/osmium/tippecanoe/go-pmtiles | Downloads data, converts GPKG/OSM → GeoJSON → MBTiles → PMTiles |
+| `nginx` | nginx | Serves the frontend and the PMTiles files as static assets |
 
-Tile requests go through nginx (`/tiles/` path), which proxies to the tileserver and caches responses on disk for up to a week.
+Tile requests (`/tiles/*.pmtiles`) are served by nginx directly from disk. MapLibre's `pmtiles` protocol handler fetches individual tiles out of each archive with HTTP range requests — there's no tile-serving process, TileJSON endpoint, or cache to manage.
 
 ### Data pipeline
 
 **NRW official data:**
-GPKG (EPSG:25832) → `ogr2ogr` (reproject to WGS84) → GeoJSON → `tippecanoe` → MBTiles
+GPKG (EPSG:25832) → `ogr2ogr` (reproject to WGS84) → GeoJSON → `tippecanoe` → MBTiles → `pmtiles convert` → PMTiles
 
 **OSM data:**
-Geofabrik PBF → `osmium` (filter by tags) → PBF → `osmium export` → GeoJSON → `tippecanoe` → MBTiles
+Geofabrik PBF → `osmium` (filter by tags) → PBF → `osmium export` → GeoJSON → `tippecanoe` → MBTiles → `pmtiles convert` → PMTiles
 
 ### Tile sources
 
-| MBTiles file | Content |
+Each dataset is built as `<name>.mbtiles` (tippecanoe output, kept around for inspection in tools like QGIS) and then converted to `<name>.pmtiles`, which is what the frontend actually loads.
+
+| Name | Content |
 |---|---|
-| `radnetz_nw.mbtiles` | NRW cycling network lines |
-| `knotenpunktnetz_nw.mbtiles` | NRW junction network lines |
-| `knotenpunkte_nw.mbtiles` | NRW junction nodes |
-| `baustellen_nw.mbtiles` | NRW roadworks (points) |
-| `radnetz_rcn_osm.mbtiles` | OSM regional cycling routes |
-| `r_radwege_nrw_osm.mbtiles` | OSM R-Radwege NRW routes |
-| `knotenpunktnetz_osm.mbtiles` | OSM cycling junction network |
-| `knotenpunkte_osm.mbtiles` | OSM cycling junction nodes |
-| `network_diff.mbtiles` | Knotenpunktnetz diff — red: NRW-only gaps, blue: OSM-only segments |
+| `radnetz_nw` | NRW cycling network lines |
+| `knotenpunktnetz_nw` | NRW junction network lines |
+| `knotenpunkte_nw` | NRW junction nodes |
+| `baustellen_nw` | NRW roadworks (points) |
+| `radnetz_rcn_osm` | OSM regional cycling routes |
+| `r_radwege_nrw_osm` | OSM R-Radwege NRW routes |
+| `knotenpunktnetz_osm` | OSM cycling junction network |
+| `knotenpunkte_osm` | OSM cycling junction nodes |
+| `network_diff` | Knotenpunktnetz diff — red: NRW-only gaps, blue: OSM-only segments |
 
 ### Diff
 
-`diff.sh` runs after both download scripts. It compares `knotenpunktnetz_nw.geojson` against `knotenpunktnetz_osm.geojson` with a 25 m spatial buffer and writes `diff/network_diff.geojson` + `tiles/network_diff.mbtiles`. `diff.py` accepts `--nrw-file`, `--osm-file`, `--out-file`, and `--buffer-m` if you want to compare other layer pairs.
+`diff.sh` runs after both download scripts. It compares `knotenpunktnetz_nw.geojson` against `knotenpunktnetz_osm.geojson` with a 25 m spatial buffer and writes `diff/network_diff.geojson` + `tiles/network_diff.mbtiles`/`.pmtiles`. `diff.py` accepts `--nrw-file`, `--osm-file`, `--out-file`, and `--buffer-m` if you want to compare other layer pairs.
 
 ---
 

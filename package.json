@@ -2,6 +2,7 @@
   "dependencies": {
     "@tailwindcss/browser": "^4.2.2",
     "maplibre-gl": "^4.7.0",
+    "pmtiles": "^4.5.0",
     "proj4": "^2.11.0"
   }
 }

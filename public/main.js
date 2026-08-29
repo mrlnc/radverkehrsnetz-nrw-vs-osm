@@ -4,6 +4,9 @@ const mapillaryLink = document.getElementById('mapillaryLink');
 
 proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs');
 
+const pmtilesProtocol = new pmtiles.Protocol();
+maplibregl.addProtocol('pmtiles', pmtilesProtocol.tile);
+
 const targetLayers = {
     baustellen_nw: {
         color: '#EBCB8B', kind: 'point', source: 'nrw',

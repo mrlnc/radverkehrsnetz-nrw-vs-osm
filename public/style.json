@@ -3,47 +3,47 @@
     "sources": {
         "knotenpunktnetz": {
             "type": "vector",
-            "url": "/tiles/data/knotenpunktnetz_nw.json",
+            "url": "pmtiles:///tiles/knotenpunktnetz_nw.pmtiles",
             "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "knotenpunkte": {
             "type": "vector",
-            "url": "/tiles/data/knotenpunkte_nw.json",
+            "url": "pmtiles:///tiles/knotenpunkte_nw.pmtiles",
             "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "radnetz": {
             "type": "vector",
-            "url": "/tiles/data/radnetz_nw.json",
+            "url": "pmtiles:///tiles/radnetz_nw.pmtiles",
             "attribution": "Radnetz Land NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "radnetz_rcn_osm": {
             "type": "vector",
-            "url": "/tiles/data/radnetz_rcn_osm.json",
+            "url": "pmtiles:///tiles/radnetz_rcn_osm.pmtiles",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
         "knotenpunkte_osm": {
             "type": "vector",
-            "url": "/tiles/data/knotenpunkte_osm.json",
+            "url": "pmtiles:///tiles/knotenpunkte_osm.pmtiles",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
         "knotenpunktnetz_osm": {
             "type": "vector",
-            "url": "/tiles/data/knotenpunktnetz_osm.json",
+            "url": "pmtiles:///tiles/knotenpunktnetz_osm.pmtiles",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
         "baustellen_nw": {
             "type": "vector",
-            "url": "/tiles/data/baustellen_nw.json",
+            "url": "pmtiles:///tiles/baustellen_nw.pmtiles",
             "attribution": "Radverkehrsnetz NRW (Lizenz DL-DE->Zero-2.0)"
         },
         "r_radwege_nrw_osm": {
             "type": "vector",
-            "url": "/tiles/data/r_radwege_nrw_osm.json",
+            "url": "pmtiles:///tiles/r_radwege_nrw_osm.pmtiles",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
         "network_diff": {
             "type": "vector",
-            "url": "/tiles/data/network_diff.json",
+            "url": "pmtiles:///tiles/network_diff.pmtiles",
             "attribution": "Radnetz Land NRW &amp; &copy; OpenStreetMap Contributors"
         },
         "osm": {

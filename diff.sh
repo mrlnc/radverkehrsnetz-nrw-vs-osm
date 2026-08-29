@@ -20,6 +20,13 @@ run() {
     fi
 }
 
+# Convert an MBTiles file to PMTiles for static, serverless tile hosting.
+to_pmtiles() {
+    local mbtiles="$1" pmtiles="${1%.mbtiles}.pmtiles"
+    rm -f "$pmtiles"
+    run pmtiles convert "$mbtiles" "$pmtiles"
+}
+
 log_info "Computing Knotenpunktnetz diff (NRW vs OSM)..."
 mkdir -p diff
 
@@ -35,5 +42,6 @@ run tippecanoe \
     --force -l network_diff \
     --output=tiles/network_diff.mbtiles \
     diff/network_diff.geojson
+to_pmtiles tiles/network_diff.mbtiles
 
-log_ok "Diff complete: diff/network_diff.geojson + tiles/network_diff.mbtiles"
+log_ok "Diff complete: diff/network_diff.geojson + tiles/network_diff.pmtiles"

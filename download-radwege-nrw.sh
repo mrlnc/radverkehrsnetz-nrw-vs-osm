@@ -22,6 +22,13 @@ run() {
     fi
 }
 
+# Convert an MBTiles file to PMTiles for static, serverless tile hosting.
+to_pmtiles() {
+    local mbtiles="$1" pmtiles="${1%.mbtiles}.pmtiles"
+    rm -f "$pmtiles"
+    run pmtiles convert "$mbtiles" "$pmtiles"
+}
+
 # Show an animated countdown progress bar, then clear the line.
 # Usage: sleep_with_progress <seconds>
 sleep_with_progress() {
@@ -204,20 +211,24 @@ fi
 run ogr2ogr -f GeoJSON -t_srs EPSG:4326 -skipfailures data/radnetz_nw.geojson data/radnetz_nw.gpkg radnetz_nw
 run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coalesce-densest --force \
     -l radnetz_nw --output=tiles/radnetz_nw.mbtiles data/radnetz_nw.geojson
+to_pmtiles tiles/radnetz_nw.mbtiles
 
 run ogr2ogr -f GeoJSON -t_srs EPSG:4326 -skipfailures data/knotenpunktnetz_nw.geojson data/knotenpunktnetz_nw.gpkg knotenpunktnetz_nw
 run ogr2ogr -f GeoJSON -t_srs EPSG:4326 -skipfailures data/knotenpunkte_nw.geojson    data/knotenpunktnetz_nw.gpkg knotenpunkte_nw
 run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coalesce-densest --force \
     -l knotenpunktnetz_nw --output=tiles/knotenpunktnetz_nw.mbtiles data/knotenpunktnetz_nw.geojson
+to_pmtiles tiles/knotenpunktnetz_nw.mbtiles
 run tippecanoe --maximum-zoom=18 --minimum-zoom=0 --drop-rate=0 --no-line-simplification \
     --no-feature-limit --no-tile-size-limit --force \
     -l knotenpunkte_nw --output=tiles/knotenpunkte_nw.mbtiles data/knotenpunkte_nw.geojson
+to_pmtiles tiles/knotenpunkte_nw.mbtiles
 
 # baustellen_nw.gpkg is already WGS84, no reprojection needed
 run ogr2ogr -f GeoJSON -skipfailures data/baustellen_nw.geojson data/baustellen_nw.gpkg baustellen_nw
 run tippecanoe --maximum-zoom=18 --minimum-zoom=0 --drop-rate=0 \
     --no-feature-limit --no-tile-size-limit --force \
     -l baustellen_nw --output=tiles/baustellen_nw.mbtiles data/baustellen_nw.geojson
+to_pmtiles tiles/baustellen_nw.mbtiles
 
 # Write meta.json for frontend timestamp display
 osm_ts=""

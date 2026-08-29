@@ -1,32 +1,15 @@
 services:
-  tileserver:
-    image: maptiler/tileserver-gl
-    volumes:
-      - ./tiles:/tiles:ro
-    command: --config /tiles/tileserver-config.json --public_url ${PUBLIC_URL:-http://osm.app.internal:8080}/tiles --verbose
-    restart: unless-stopped
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          memory: 512m
-          cpus: "1.0"
-
   nginx:
     build:
       context: .
       dockerfile: Dockerfile.runtime
     ports:
       - "8080:80"
+    volumes:
+      - ./tiles:/usr/share/nginx/html/tiles:ro
     restart: unless-stopped
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
-    depends_on:
-      - tileserver

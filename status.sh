@@ -102,9 +102,9 @@ else
 fi
 
 printf "\n  Tiles\n"
-file_status "radnetz_rcn_osm.mbtiles    " "$TILES/radnetz_rcn_osm.mbtiles"
-file_status "knotenpunktnetz_osm.mbtiles" "$TILES/knotenpunktnetz_osm.mbtiles"
-file_status "knotenpunkte_osm.mbtiles   " "$TILES/knotenpunkte_osm.mbtiles"
+file_status "radnetz_rcn_osm.pmtiles    " "$TILES/radnetz_rcn_osm.pmtiles"
+file_status "knotenpunktnetz_osm.pmtiles" "$TILES/knotenpunktnetz_osm.pmtiles"
+file_status "knotenpunkte_osm.pmtiles   " "$TILES/knotenpunkte_osm.pmtiles"
 
 # ── NRW ──────────────────────────────────────────────────────────────────────
 header "NRW  (radverkehrsnetz.nrw.de)"
@@ -141,10 +141,10 @@ fi
 [ -n "$NRW_DOWNLOADED_AT" ] && info "Downloaded       $NRW_DOWNLOADED_AT"
 
 printf "\n  Tiles\n"
-file_status "radnetz_nw.mbtiles         " "$TILES/radnetz_nw.mbtiles"
-file_status "knotenpunktnetz_nw.mbtiles " "$TILES/knotenpunktnetz_nw.mbtiles"
-file_status "knotenpunkte_nw.mbtiles    " "$TILES/knotenpunkte_nw.mbtiles"
-file_status "baustellen_nw.mbtiles      " "$TILES/baustellen_nw.mbtiles"
+file_status "radnetz_nw.pmtiles         " "$TILES/radnetz_nw.pmtiles"
+file_status "knotenpunktnetz_nw.pmtiles " "$TILES/knotenpunktnetz_nw.pmtiles"
+file_status "knotenpunkte_nw.pmtiles    " "$TILES/knotenpunkte_nw.pmtiles"
+file_status "baustellen_nw.pmtiles      " "$TILES/baustellen_nw.pmtiles"
 
 # ── Freshness checks (network) ────────────────────────────────────────────────
 header "Update check"
@@ -200,13 +200,13 @@ for f in \
     "$DATA/nordrhein-westfalen-latest.osm.pbf" \
     "$DATA/radnetz_nw.gpkg" \
     "$DATA/knotenpunktnetz_nw.gpkg" \
-    "$TILES/radnetz_rcn_osm.mbtiles" \
-    "$TILES/knotenpunktnetz_osm.mbtiles" \
-    "$TILES/knotenpunkte_osm.mbtiles" \
-    "$TILES/radnetz_nw.mbtiles" \
-    "$TILES/knotenpunktnetz_nw.mbtiles" \
-    "$TILES/knotenpunkte_nw.mbtiles" \
-    "$TILES/baustellen_nw.mbtiles"; do
+    "$TILES/radnetz_rcn_osm.pmtiles" \
+    "$TILES/knotenpunktnetz_osm.pmtiles" \
+    "$TILES/knotenpunkte_osm.pmtiles" \
+    "$TILES/radnetz_nw.pmtiles" \
+    "$TILES/knotenpunktnetz_nw.pmtiles" \
+    "$TILES/knotenpunkte_nw.pmtiles" \
+    "$TILES/baustellen_nw.pmtiles"; do
     [ -f "$f" ] || MISSING_COUNT=$(( MISSING_COUNT + 1 ))
 done
 

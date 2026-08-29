@@ -8,6 +8,8 @@ docker/
 
 data/
 tiles/*.mbtiles
+tiles/*.pmtiles
 
 *.mbtiles
+*.pmtiles
 *.geojson

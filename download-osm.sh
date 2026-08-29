@@ -22,6 +22,13 @@ run() {
     fi
 }
 
+# Convert an MBTiles file to PMTiles for static, serverless tile hosting.
+to_pmtiles() {
+    local mbtiles="$1" pmtiles="${1%.mbtiles}.pmtiles"
+    rm -f "$pmtiles"
+    run pmtiles convert "$mbtiles" "$pmtiles"
+}
+
 # Show an animated countdown progress bar, then clear the line.
 # Usage: sleep_with_progress <seconds>
 sleep_with_progress() {
@@ -175,6 +182,7 @@ run osmium export /app/data/radnetz_rcn_osm.osm.pbf \
     -o /app/data/radnetz_rcn_osm.geojson --overwrite
 run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coalesce-densest --force \
     -l radnetz_rcn_osm --output=/app/tiles/radnetz_rcn_osm.mbtiles /app/data/radnetz_rcn_osm.geojson
+to_pmtiles /app/tiles/radnetz_rcn_osm.mbtiles
 
 # Dataset: Knotenpunktnetz — two-pass AND filter (network=rcn AND network:type=node_network)
 run osmium tags-filter "$PBF" r/network=rcn \
@@ -186,6 +194,7 @@ run osmium export /app/data/knotenpunktnetz_osm.osm.pbf \
     -o /app/data/knotenpunktnetz_osm.geojson --overwrite
 run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coalesce-densest --force \
     -l knotenpunktnetz_osm --output=/app/tiles/knotenpunktnetz_osm.mbtiles /app/data/knotenpunktnetz_osm.geojson
+to_pmtiles /app/tiles/knotenpunktnetz_osm.mbtiles
 
 # Dataset: Knotenpunkte (individual junction nodes)
 run osmium tags-filter "$PBF" n/network:type=node_network \
@@ -195,6 +204,7 @@ run osmium export /app/data/knotenpunkte_osm.osm.pbf \
 run tippecanoe --maximum-zoom=18 --minimum-zoom=0 --drop-rate=0 --no-line-simplification \
     --no-feature-limit --no-tile-size-limit --force \
     -l knotenpunkte_osm --output=/app/tiles/knotenpunkte_osm.mbtiles /app/data/knotenpunkte_osm.geojson
+to_pmtiles /app/tiles/knotenpunkte_osm.mbtiles
 
 # Dataset: R-Radwege NRW (relations named R<n> [NRW])
 run osmium tags-filter "$PBF" 'r/name=*[NRW]*' \
@@ -203,5 +213,6 @@ run osmium export /app/data/r_radwege_nrw_osm.osm.pbf \
     -o /app/data/r_radwege_nrw_osm.geojson --overwrite
 run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coalesce-densest --force \
     -l r_radwege_nrw_osm --output=/app/tiles/r_radwege_nrw_osm.mbtiles /app/data/r_radwege_nrw_osm.geojson
+to_pmtiles /app/tiles/r_radwege_nrw_osm.mbtiles
 
 log_ok "All OSM steps completed successfully."
