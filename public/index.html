@@ -33,24 +33,28 @@
       </div>
       <p class="text-sm text-gray-700">
         Diese Karte vergleicht das
-        <a href="https://www.radverkehrsnetz.nrw.de" class="underline text-[#5E81AC]" target="_blank">offizielle Radverkehrsnetz NRW</a>
-        mit den Radwegedaten in OpenStreetMap. Ziel ist es, Lücken und Abweichungen sichtbar zu machen, um OSM zu verbessern.
+        <a href="https://www.radverkehrsnetz.nrw.de" class="underline text-[#5E81AC]" target="_blank" rel="noopener noreferrer">offizielle Radverkehrsnetz NRW</a>
+        mit den Radwegedaten in <a href="https://www.openstreetmap.org" class="underline text-[#5E81AC]" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>. Ziel ist es, Lücken und Abweichungen sichtbar zu machen, um OSM zu verbessern.
       </p>
       <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 space-y-1">
         <p>
           <strong>Datenschutz:</strong> Diese Seite verwendet keine Cookies, kein Tracking und keine Analyse-Dienste.
           Die Hintergrundkarte wird direkt von OpenStreetMap-Servern geladen – dabei wird Ihre IP-Adresse an die OSM Foundation übertragen
-          (<a href="https://osmfoundation.org/wiki/Privacy_Policy" class="underline" target="_blank">OSM-Datenschutzerklärung</a>).
+          (<a href="https://osmfoundation.org/wiki/Privacy_Policy" class="underline" target="_blank" rel="noopener noreferrer">OSM-Datenschutzerklärung</a>).
         </p>
       </div>
       <p class="text-xs text-gray-500">
         Daten des Radverkehrsnetz NRW:
-        <a href="https://www.govdata.de/dl-de/zero-2-0" class="underline" target="_blank">Datenlizenz Deutschland – Zero – Version 2.0</a>.
-        OSM-Daten: © OpenStreetMap-Mitwirkende (ODbL).
+        <a href="https://www.govdata.de/dl-de/zero-2-0" class="underline" target="_blank" rel="noopener noreferrer">Datenlizenz Deutschland – Zero – Version 2.0</a>.
+        OSM-Daten: © OpenStreetMap-Mitwirkende (<a href="https://www.openstreetmap.org/copyright" class="underline" target="_blank" rel="noopener noreferrer">ODbL</a>).
       </p>
       <button id="startBtn"
         class="w-full bg-[#5E81AC] hover:bg-[#4C6A8F] active:bg-[#3F5772] text-white font-semibold py-2.5 px-4 rounded-lg transition-colors">
         Karte öffnen
+      </button>
+      <button type="button" onclick="openModal('legalModal')"
+        class="w-full text-center text-xs text-gray-400 hover:text-gray-600 underline transition-colors">
+        Impressum & Datenschutz
       </button>
     </div>
   </div>
@@ -83,11 +87,11 @@
   <!-- ── Context menu ───────────────────────────────────────────────────── -->
   <div id="context-menu"
     class="hidden fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg text-sm w-44 py-1 overflow-hidden">
-    <a id="osmLink" href="#" target="_blank"
+    <a id="osmLink" href="#" target="_blank" rel="noopener noreferrer"
       class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50">In OSM öffnen</a>
-    <a id="mapillaryLink" href="#" target="_blank"
+    <a id="mapillaryLink" href="#" target="_blank" rel="noopener noreferrer"
       class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50">In Mapillary öffnen</a>
-    <a id="rvnLink" href="#" target="_blank"
+    <a id="rvnLink" href="#" target="_blank" rel="noopener noreferrer"
       class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50">Im RVN-Planer öffnen</a>
   </div>
 
@@ -101,8 +105,9 @@
         class="hover:text-gray-800 transition-colors">Impressum & Datenschutz</button>
     </div>
     <span id="dataTimestamp" class="hidden"></span>
-    <span>© <a href="https://www.openstreetmap.org/copyright" target="_blank"
-        class="hover:text-gray-800 transition-colors">OpenStreetMap-Mitwirkende</a> · Radnetz Land NRW</span>
+    <span>© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer"
+        class="hover:text-gray-800 transition-colors">OpenStreetMap-Mitwirkende</a> · <a href="https://www.radverkehrsnetz.nrw.de" target="_blank" rel="noopener noreferrer"
+        class="hover:text-gray-800 transition-colors">Radnetz Land NRW</a></span>
   </div>
 
   <!-- ── Info modal ─────────────────────────────────────────────────────── -->
@@ -112,12 +117,12 @@
       <div class="flex items-start justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900">Info</h2>
         <button onclick="closeModal('infoModal')"
-          class="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-4 transition-colors">×</button>
+          aria-label="Schließen" class="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-4 transition-colors">×</button>
       </div>
       <div class="text-sm text-gray-600 space-y-3">
         <p>
           Diese Karte vergleicht Radwege in OpenStreetMap (OSM) mit den Daten des Landes
-          (<a href="https://www.radverkehrsnetz.nrw.de" class="underline text-[#5E81AC]" target="_blank">Radverkehrsnetz NRW</a>).
+          (<a href="https://www.radverkehrsnetz.nrw.de" class="underline text-[#5E81AC]" target="_blank" rel="noopener noreferrer">Radverkehrsnetz NRW</a>).
         </p>
         <p>
           Ziel ist es, Lücken und Fehler in OSM zu finden. Nicht alle Abweichungen sind Fehler –
@@ -125,8 +130,8 @@
         </p>
         <p>
           Daten des Radverkehrsnetz NRW:
-          <a href="https://www.govdata.de/dl-de/zero-2-0" class="underline text-[#5E81AC]" target="_blank">Datenlizenz Deutschland – Zero – Version 2.0</a>.
-          <a href="https://www.radverkehrsnetz.nrw.de/rvn_link.asp" class="underline text-[#5E81AC]" target="_blank">Weitere Informationen</a>.
+          <a href="https://www.govdata.de/dl-de/zero-2-0" class="underline text-[#5E81AC]" target="_blank" rel="noopener noreferrer">Datenlizenz Deutschland – Zero – Version 2.0</a>.
+          <a href="https://www.radverkehrsnetz.nrw.de/rvn_link.asp" class="underline text-[#5E81AC]" target="_blank" rel="noopener noreferrer">Weitere Informationen</a>.
         </p>
       </div>
     </div>
@@ -139,7 +144,7 @@
       <div class="flex items-start justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900">Impressum & Datenschutz</h2>
         <button onclick="closeModal('legalModal')"
-          class="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-4 transition-colors">×</button>
+          aria-label="Schließen" class="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-4 transition-colors">×</button>
       </div>
       <div class="text-sm text-gray-600 space-y-4">
         <div>
@@ -159,7 +164,7 @@
               <strong class="text-gray-700">Serverzugriffsdaten:</strong> Beim Aufruf dieser Seite speichert der Webserver technisch bedingt Zugriffsdaten (IP-Adresse, Zeitstempel, aufgerufene URL) im Zugriffsprotokoll. Diese Daten werden nicht an Dritte weitergegeben. Rechtsgrundlage ist Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;f DSGVO (berechtigtes Interesse am sicheren Betrieb).
             </p>
             <p>
-              <strong class="text-gray-700">Hintergrundkarte:</strong> Die Kartenkacheln werden direkt von Servern der OpenStreetMap Foundation (OSMF), Cambridge, Großbritannien, geladen. Dabei wird Ihre IP-Adresse an die OSMF übertragen. Es gilt die <a href="https://osmfoundation.org/wiki/Privacy_Policy" class="underline text-[#5E81AC]" target="_blank">Datenschutzerklärung der OSMF</a>.
+              <strong class="text-gray-700">Hintergrundkarte:</strong> Die Kartenkacheln werden direkt von Servern der OpenStreetMap Foundation (OSMF), Cambridge, Großbritannien, geladen. Dabei wird Ihre IP-Adresse an die OSMF übertragen. Es gilt die <a href="https://osmfoundation.org/wiki/Privacy_Policy" class="underline text-[#5E81AC]" target="_blank" rel="noopener noreferrer">Datenschutzerklärung der OSMF</a>.
             </p>
             <p>
               <strong class="text-gray-700">Ihre Rechte:</strong> Sie haben das Recht auf Auskunft (Art.&nbsp;15 DSGVO), Berichtigung (Art.&nbsp;16), Löschung (Art.&nbsp;17) und Widerspruch (Art.&nbsp;21). Wenden Sie sich dazu an die im Impressum genannte Person.

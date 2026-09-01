@@ -6,7 +6,6 @@ COPY package.json ./
 RUN npm install --omit=dev
 
 COPY public ./public
-COPY src ./src
 
 RUN mkdir -p public/thirdparty \
     && cp node_modules/maplibre-gl/dist/maplibre-gl.css public/thirdparty/maplibre-gl.css \

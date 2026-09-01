@@ -108,12 +108,12 @@ function setSwatchColor(layerId, color) {
 const presets = [
     {
         id: 'missing_in_osm',
-        label: 'Fehlende Knotenpunkte in OSM',
+        label: 'Lücken im OSM-Knotenpunktnetz',
         layers: ['knotenpunktnetz_osm', 'knotenpunktnetz_nw']
     },
     {
         id: 'missing_in_nrw',
-        label: 'Fehlende Knotenpunkte im NRW-Netz',
+        label: 'Lücken im NRW-Knotenpunktnetz',
         layers: ['knotenpunktnetz_nw', 'knotenpunktnetz_osm']
     }
 ];
