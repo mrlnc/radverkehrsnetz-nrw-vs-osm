@@ -184,6 +184,15 @@ run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coale
     -l radnetz_rcn_osm --output=/app/tiles/radnetz_rcn_osm.mbtiles /app/data/radnetz_rcn_osm.geojson
 to_pmtiles /app/tiles/radnetz_rcn_osm.mbtiles
 
+# Dataset: all LCN (local cycle network) routes in NRW — counterpart to NRW's "Lokales Netz"
+run osmium tags-filter "$PBF" r/network=lcn \
+    -o /app/data/radnetz_lcn_osm.osm.pbf --overwrite
+run osmium export /app/data/radnetz_lcn_osm.osm.pbf \
+    -o /app/data/radnetz_lcn_osm.geojson --overwrite
+run tippecanoe --maximum-zoom=18 --no-feature-limit --no-tile-size-limit --coalesce-densest --force \
+    -l radnetz_lcn_osm --output=/app/tiles/radnetz_lcn_osm.mbtiles /app/data/radnetz_lcn_osm.geojson
+to_pmtiles /app/tiles/radnetz_lcn_osm.mbtiles
+
 # Dataset: Knotenpunktnetz — two-pass AND filter (network=rcn AND network:type=node_network)
 run osmium tags-filter "$PBF" r/network=rcn \
     -o /app/data/tmp_rcn.osm.pbf --overwrite

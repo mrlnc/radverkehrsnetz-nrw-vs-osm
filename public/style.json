@@ -21,6 +21,11 @@
             "url": "pmtiles:///tiles/radnetz_rcn_osm.pmtiles",
             "attribution": "&copy; OpenStreetMap Contributors"
         },
+        "radnetz_lcn_osm": {
+            "type": "vector",
+            "url": "pmtiles:///tiles/radnetz_lcn_osm.pmtiles",
+            "attribution": "&copy; OpenStreetMap Contributors"
+        },
         "knotenpunkte_osm": {
             "type": "vector",
             "url": "pmtiles:///tiles/knotenpunkte_osm.pmtiles",
@@ -238,6 +243,28 @@
             },
             "paint": {
                 "line-color": "#88C0D0",
+                "line-width": [
+                    "interpolate",
+                    [ "linear" ],
+                    [ "zoom" ],
+                    5, 1,
+                    10, 2,
+                    15, 5
+                ]
+            }
+        },
+        {
+            "id": "radnetz_lcn_osm",
+            "type": "line",
+            "source": "radnetz_lcn_osm",
+            "source-layer": "radnetz_lcn_osm",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round",
+                "visibility": "none"
+            },
+            "paint": {
+                "line-color": "#D1D5DB",
                 "line-width": [
                     "interpolate",
                     [ "linear" ],

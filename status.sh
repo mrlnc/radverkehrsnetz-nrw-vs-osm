@@ -103,6 +103,7 @@ fi
 
 printf "\n  Tiles\n"
 file_status "radnetz_rcn_osm.pmtiles    " "$TILES/radnetz_rcn_osm.pmtiles"
+file_status "radnetz_lcn_osm.pmtiles    " "$TILES/radnetz_lcn_osm.pmtiles"
 file_status "knotenpunktnetz_osm.pmtiles" "$TILES/knotenpunktnetz_osm.pmtiles"
 file_status "knotenpunkte_osm.pmtiles   " "$TILES/knotenpunkte_osm.pmtiles"
 
@@ -201,6 +202,7 @@ for f in \
     "$DATA/radnetz_nw.gpkg" \
     "$DATA/knotenpunktnetz_nw.gpkg" \
     "$TILES/radnetz_rcn_osm.pmtiles" \
+    "$TILES/radnetz_lcn_osm.pmtiles" \
     "$TILES/knotenpunktnetz_osm.pmtiles" \
     "$TILES/knotenpunkte_osm.pmtiles" \
     "$TILES/radnetz_nw.pmtiles" \

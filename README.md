@@ -95,6 +95,7 @@ Each dataset is built as `<name>.mbtiles` (tippecanoe output, kept around for in
 | `knotenpunkte_nw` | NRW junction nodes |
 | `baustellen_nw` | NRW roadworks (points) |
 | `radnetz_rcn_osm` | OSM regional cycling routes |
+| `radnetz_lcn_osm` | OSM local cycling routes (network=lcn), counterpart to NRW "Lokales Netz" |
 | `r_radwege_nrw_osm` | OSM R-Radwege NRW routes |
 | `knotenpunktnetz_osm` | OSM cycling junction network |
 | `knotenpunkte_osm` | OSM cycling junction nodes |

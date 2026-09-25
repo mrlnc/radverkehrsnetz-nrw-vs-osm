@@ -54,6 +54,11 @@ const targetLayers = {
         label: 'Radrouten (RCN)',
         description: 'Überregionale Radrouten (Regional Cycling Network) aus OSM.'
     },
+    radnetz_lcn_osm: {
+        kind: 'line', source: 'osm',
+        label: 'Lokale Radrouten (LCN)',
+        description: 'Lokale Radrouten (Local Cycling Network, network=lcn) aus OSM – Gegenstück zum „Lokalen Netz" im NRW-Datensatz.'
+    },
     r_radwege_nrw_osm: {
         kind: 'line', source: 'osm',
         label: 'R-Radwege NRW',
@@ -99,6 +104,29 @@ function setSwatchColor(layerId, color) {
     if (!swatch) return;
     swatch.style.backgroundImage = '';
     swatch.style.background = color;
+    // Only active layers hold a color, so only those can be re-colored.
+    const wrap = swatch.parentElement;
+    wrap.style.cursor = color === INACTIVE_COLOR ? '' : 'pointer';
+    wrap.title = color === INACTIVE_COLOR ? '' : 'Farbe wechseln';
+}
+
+// Jump to the next pool color, preferring one no other active layer uses,
+// so a single click is enough to get something distinguishable.
+function cycleLayerColor(layerId) {
+    const current = activeColors.get(layerId);
+    if (!current || !mapInstance) return;
+    const usedByOthers = new Set([...activeColors].filter(([id]) => id !== layerId).map(([, c]) => c));
+    const start = COLOR_POOL.indexOf(current);
+    let next = COLOR_POOL[(start + 1) % COLOR_POOL.length];
+    for (let i = 1; i <= COLOR_POOL.length; i++) {
+        const candidate = COLOR_POOL[(start + i) % COLOR_POOL.length];
+        if (!usedByOthers.has(candidate)) { next = candidate; break; }
+    }
+    activeColors.set(layerId, next);
+    if (mapInstance.getLayer(layerId)) {
+        mapInstance.setPaintProperty(layerId, paintPropForKind(targetLayers[layerId].kind), next);
+    }
+    setSwatchColor(layerId, next);
 }
 
 // Presets set up a specific comparison in one click: the layer array order
@@ -115,6 +143,16 @@ const presets = [
         id: 'missing_in_nrw',
         label: 'Lücken im NRW-Knotenpunktnetz',
         layers: ['knotenpunktnetz_nw', 'knotenpunktnetz_osm']
+    },
+    {
+        id: 'missing_lokal_in_osm',
+        label: 'Lücken im OSM-Lokalnetz',
+        layers: ['radnetz_lcn_osm', 'radnetz_nw_netztyp_lokal']
+    },
+    {
+        id: 'missing_lokal_in_nrw',
+        label: 'Lücken im NRW-Lokalnetz',
+        layers: ['radnetz_nw_netztyp_lokal', 'radnetz_lcn_osm']
     }
 ];
 
@@ -164,7 +202,9 @@ function createLayerItem(layerId) {
 
     // Fixed-width symbol column so dots and lines stay aligned
     const symbolWrap = document.createElement('span');
-    symbolWrap.style.cssText = 'flex-shrink:0;width:1.25rem;display:flex;align-items:center;justify-content:center;';
+    // align-self:stretch makes the whole row height clickable, not just the 3px swatch
+    symbolWrap.style.cssText = 'flex-shrink:0;width:1.25rem;display:flex;align-items:center;justify-content:center;align-self:stretch;';
+    symbolWrap.addEventListener('click', () => cycleLayerColor(layerId));
     const swatch = document.createElement('span');
     swatch.className = 'layer-swatch';
     if (kind === 'line') {

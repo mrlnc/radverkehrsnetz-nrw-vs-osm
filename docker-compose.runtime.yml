@@ -7,9 +7,15 @@ services:
       - "8080:80"
     volumes:
       - ./tiles:/usr/share/nginx/html/tiles:ro
+      - ./public/meta.json:/usr/share/nginx/html/meta.json:ro
     restart: unless-stopped
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "1.0"
